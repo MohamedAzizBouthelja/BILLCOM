@@ -1,0 +1,142 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: billcom-alerts
+  namespace: monitoring
+  labels:
+    release: prometheus  # must match ruleSelector in Helm values
+spec:
+  groups:
+    # ────────────────────────────────────────────────────────────
+    # Application — HTTP
+    # ────────────────────────────────────────────────────────────
+    - name: billcom.http
+      interval: 30s
+      rules:
+        - alert: HighErrorRate
+          expr: |
+            sum(rate(http_request_duration_seconds_count{namespace="billcom", status_code=~"5.."}[5m]))
+            /
+            sum(rate(http_request_duration_seconds_count{namespace="billcom"}[5m])) > 0.05
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Taux d'erreur HTTP élevé ({{ $value | humanizePercentage }})"
+            description: "Plus de 5 % des requêtes retournent 5xx depuis 2 minutes."
+
+        - alert: HighLatencyP95
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(http_request_duration_seconds_bucket{namespace="billcom"}[5m])) by (le, job)
+            ) > 2
+          for: 3m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Latence P95 élevée sur {{ $labels.job }} ({{ $value }}s)"
+            description: "Le 95e percentile de latence dépasse 2 s depuis 3 minutes."
+
+        - alert: ServiceDown
+          expr: up{namespace="billcom"} == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Service {{ $labels.job }} inaccessible"
+            description: "Prometheus ne peut plus scraper {{ $labels.job }}."
+
+    # ────────────────────────────────────────────────────────────
+    # Auth — brute-force / échecs de connexion
+    # ────────────────────────────────────────────────────────────
+    - name: billcom.auth
+      interval: 30s
+      rules:
+        - alert: BruteForceAttempt
+          expr: |
+            increase(auth_login_failure_total{namespace="billcom"}[5m]) > 10
+          for: 0m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Tentative de brute-force détectée"
+            description: "Plus de 10 échecs de connexion en 5 minutes."
+
+        - alert: HighLoginFailureRate
+          expr: |
+            rate(auth_login_failure_total{namespace="billcom"}[5m]) > 0.5
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Taux d'échec de connexion élevé"
+            description: "Plus de 0,5 échec/s depuis 2 minutes."
+
+    # ────────────────────────────────────────────────────────────
+    # MySQL
+    # ────────────────────────────────────────────────────────────
+    - name: billcom.mysql
+      interval: 60s
+      rules:
+        - alert: MySQLTooManyConnections
+          expr: mysql_global_status_threads_connected > 80
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "MySQL — connexions actives élevées ({{ $value }})"
+            description: "Le nombre de connexions MySQL dépasse 80."
+
+        - alert: MySQLSlowQueries
+          expr: rate(mysql_global_status_slow_queries[5m]) > 0.1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "MySQL — requêtes lentes détectées"
+            description: "Plus de 0,1 requête lente/s depuis 5 minutes."
+
+        - alert: MySQLDown
+          expr: mysql_up == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "MySQL inaccessible"
+            description: "L'exporteur mysqld-exporter ne peut pas joindre MySQL."
+
+    # ────────────────────────────────────────────────────────────
+    # Kubernetes / Minikube — ressources
+    # ────────────────────────────────────────────────────────────
+    - name: billcom.k8s
+      interval: 60s
+      rules:
+        - alert: NodeHighCPU
+          expr: |
+            1 - avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) > 0.85
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "CPU node élevé ({{ $value | humanizePercentage }})"
+            description: "L'utilisation CPU du node dépasse 85 % depuis 5 minutes."
+
+        - alert: NodeHighMemory
+          expr: |
+            1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) > 0.90
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Mémoire node critique ({{ $value | humanizePercentage }})"
+            description: "Plus de 90 % de la RAM du node est utilisée."
+
+        - alert: PodCrashLooping
+          expr: |
+            rate(kube_pod_container_status_restarts_total{namespace="billcom"}[15m]) * 60 * 15 > 3
+          for: 0m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Pod {{ $labels.pod }} en crash-loop"
+            description: "Le pod a redémarré plus de 3 fois en 15 minutes."

@@ -1,0 +1,118 @@
+# Helm values — loki-stack (Loki v2.9 + Promtail)
+# Compatible avec loki-stack chart v2.10.3
+
+# ── Loki ──────────────────────────────────────────────────────────────────────
+loki:
+  enabled: true
+
+  config:
+    auth_enabled: false
+
+    server:
+      http_listen_port: 3100
+
+    ingester:
+      chunk_idle_period: 3m
+      chunk_block_size: 262144
+      chunk_retain_period: 1m
+      max_transfer_retries: 0
+      lifecycler:
+        ring:
+          kvstore:
+            store: inmemory
+          replication_factor: 1
+
+    limits_config:
+      enforce_metric_name: false
+      reject_old_samples: true
+      reject_old_samples_max_age: 168h
+      retention_period: 72h
+
+    # Schema v11 — compatible Loki v2.x
+    schema_config:
+      configs:
+        - from: "2020-10-24"
+          store: boltdb-shipper
+          object_store: filesystem
+          schema: v11
+          index:
+            prefix: index_
+            period: 24h
+
+    storage_config:
+      boltdb_shipper:
+        active_index_directory: /data/loki/boltdb-shipper-active
+        cache_location: /data/loki/boltdb-shipper-cache
+        cache_ttl: 24h
+        shared_store: filesystem
+      filesystem:
+        directory: /data/loki/chunks
+
+    chunk_store_config:
+      max_look_back_period: 0s
+
+    table_manager:
+      retention_deletes_enabled: false
+      retention_period: 0s
+
+    compactor:
+      working_directory: /data/loki/boltdb-shipper-compactor
+      shared_store: filesystem
+
+  persistence:
+    enabled: true
+    size: 5Gi
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# ── Promtail ──────────────────────────────────────────────────────────────────
+promtail:
+  enabled: true
+
+  config:
+    clients:
+      - url: http://loki:3100/loki/api/v1/push
+
+    scrape_configs:
+      - job_name: billcom-pods
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - billcom
+        pipeline_stages:
+          - json:
+              expressions:
+                level: levelname
+                message: message
+                logger: name
+          - labels:
+              level:
+              logger:
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            target_label: app
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+          - source_labels: [__meta_kubernetes_pod_container_name]
+            target_label: container
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+# Grafana déjà déployé via kube-prometheus-stack
+grafana:
+  enabled: false

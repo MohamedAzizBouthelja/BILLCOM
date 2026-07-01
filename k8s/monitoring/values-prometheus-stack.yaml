@@ -1,0 +1,159 @@
+# Helm values — kube-prometheus-stack
+# helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+# helm install prometheus prometheus-community/kube-prometheus-stack \
+#   -n monitoring --create-namespace \
+#   -f k8s/monitoring/values-prometheus-stack.yaml
+
+# ── Prometheus ───────────────────────────────────────────────────────────────
+prometheus:
+  prometheusSpec:
+    # Scrape all ServiceMonitors in all namespaces (no label filter)
+    serviceMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorSelector: {}
+    serviceMonitorNamespaceSelector: {}
+
+    # Scrape all PrometheusRules in all namespaces
+    ruleSelectorNilUsesHelmValues: false
+    ruleSelector: {}
+    ruleNamespaceSelector: {}
+
+    # Retention
+    retention: 15d
+    retentionSize: "8GB"
+
+    # Resources (tuned for Minikube 4 CPU / 4 GB)
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+
+  # Expose Prometheus UI via NodePort for easy Minikube access
+  service:
+    type: NodePort
+    nodePort: 30090
+
+# ── Alertmanager ─────────────────────────────────────────────────────────────
+alertmanager:
+  alertmanagerSpec:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 100m
+        memory: 128Mi
+
+  config:
+    global:
+      resolve_timeout: 5m
+      # Set your SMTP or Slack credentials here
+      # smtp_smarthost: 'smtp.gmail.com:587'
+      # smtp_from: 'alerts@billcom.local'
+      # smtp_auth_username: 'you@gmail.com'
+      # smtp_auth_password: 'app-password'
+
+    route:
+      group_by: ['alertname', 'namespace']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 12h
+      receiver: 'default'
+      routes:
+        - match:
+            severity: critical
+          receiver: 'critical-alerts'
+        - match:
+            severity: warning
+          receiver: 'warning-alerts'
+
+    receivers:
+      - name: 'default'
+        # Null sink — replace with real receiver
+      - name: 'critical-alerts'
+        # email_configs:
+        #   - to: 'ops-team@billcom.local'
+        #     send_resolved: true
+        # slack_configs:
+        #   - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        #     channel: '#alerts-critical'
+        #     send_resolved: true
+      - name: 'warning-alerts'
+        # slack_configs:
+        #   - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        #     channel: '#alerts-warning'
+        #     send_resolved: true
+
+  service:
+    type: NodePort
+    nodePort: 30093
+
+# ── Grafana ───────────────────────────────────────────────────────────────────
+grafana:
+  adminPassword: "billcom-grafana-2025"
+
+  service:
+    type: NodePort
+    nodePort: 30030
+
+  # Sidecar picks up ConfigMaps labelled grafana_dashboard=1 from ALL namespaces
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      searchNamespace: ALL
+      folderAnnotation: grafana_folder
+      provider:
+        foldersFromFilesStructure: true
+    datasources:
+      defaultDatasourceEnabled: false
+
+  # Définir les deux datasources manuellement (désactivation du Prometheus auto du chart)
+  additionalDataSources:
+    - name: Prometheus
+      type: prometheus
+      url: http://prometheus-kube-prometheus-prometheus:9090
+      access: proxy
+      isDefault: true
+      jsonData:
+        timeInterval: 30s
+    - name: Loki
+      type: loki
+      url: http://loki:3100
+      access: proxy
+      isDefault: false
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# ── node-exporter ─────────────────────────────────────────────────────────────
+nodeExporter:
+  enabled: true
+
+# ── kube-state-metrics ────────────────────────────────────────────────────────
+kubeStateMetrics:
+  enabled: true
+
+# ── Disable components not needed on Minikube single-node ─────────────────────
+kubeEtcd:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false

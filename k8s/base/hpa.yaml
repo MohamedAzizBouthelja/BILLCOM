@@ -1,0 +1,119 @@
+# Horizontal Pod Autoscaler — services Billcom
+# Déclenche le scaling automatique selon la consommation CPU.
+#
+# Formule HPA : replicas_cibles = ceil(replicas_actuels × (CPU_actuel / CPU_cible))
+# Exemple product-service : 1 pod à 180m CPU → 180/105 = 1.71 → scale à 2 pods
+#
+# Scale UP  : si CPU > 70% de requests.cpu pendant 30s  → ajoute 1 pod
+# Scale DOWN : si CPU < 70% de requests.cpu pendant 120s → retire 1 pod (stabilisation)
+
+---
+# ── product-service ───────────────────────────────────────────────────────────
+# Service le plus sollicité (catalogue, recherche, filtres, reviews)
+# max 4 replicas : chaque pod prend 150m CPU → 4 pods = 600m max sur le nœud
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: product-service-hpa
+  namespace: billcom
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: product-service
+  minReplicas: 1
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70   # scale up si CPU > 105m (70% × 150m)
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30      # réagit en 30s à un pic
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 30               # ajoute max 1 pod toutes les 30s
+    scaleDown:
+      stabilizationWindowSeconds: 120     # attend 2min avant de réduire
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60               # retire max 1 pod par minute
+
+---
+# ── user-service ──────────────────────────────────────────────────────────────
+# Trafic d'authentification (login, register, profil)
+# max 3 replicas : moins sollicité que product/order
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: user-service-hpa
+  namespace: billcom
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: user-service
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70   # scale up si CPU > 70m (70% × 100m)
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 30
+    scaleDown:
+      stabilizationWindowSeconds: 120
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60
+
+---
+# ── order-service ─────────────────────────────────────────────────────────────
+# Trafic de commandes + appels Stripe + cache Redis
+# max 4 replicas : chaque pod gère des sessions Stripe isolées
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: order-service-hpa
+  namespace: billcom
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: order-service
+  minReplicas: 1
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70   # scale up si CPU > 105m (70% × 150m)
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 30
+    scaleDown:
+      stabilizationWindowSeconds: 120
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60

@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+.venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Node / Frontend
+node_modules/
+frontend/dist/
+frontend/.cache/
+npm-debug.log*
+yarn-error.log*
+
+# Docker
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Database
+*.sqlite
+*.db
+
+# SSL certs
+*.pem
+*.key
+*.crt

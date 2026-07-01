@@ -1,0 +1,77 @@
+# mysqld-exporter v0.15.1 — utilise un fichier .my.cnf (DATA_SOURCE_NAME supprimé en v0.15)
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-exporter-secret
+  namespace: billcom
+type: Opaque
+stringData:
+  my.cnf: |
+    [client]
+    user=root
+    password=rootpassword
+    host=mysql
+    port=3306
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-exporter
+  namespace: billcom
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-exporter
+  template:
+    metadata:
+      labels:
+        app: mysql-exporter
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9104"
+    spec:
+      containers:
+        - name: mysql-exporter
+          image: prom/mysqld-exporter:v0.15.1
+          ports:
+            - name: http
+              containerPort: 9104
+          args:
+            - --config.my-cnf=/etc/mysql/my.cnf
+            - --collect.global_status
+            - --collect.global_variables
+            - --collect.info_schema.innodb_metrics
+            - --collect.perf_schema.indexiowaits
+          volumeMounts:
+            - name: mysql-config
+              mountPath: /etc/mysql
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 9104
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: mysql-config
+          secret:
+            secretName: mysql-exporter-secret
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-exporter
+  namespace: billcom
+  labels:
+    app: mysql-exporter
+spec:
+  selector:
+    app: mysql-exporter
+  ports:
+    - name: http
+      port: 9104
+      targetPort: 9104

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: billcom-config
+  namespace: billcom
+data:
+  JWT_ALGORITHM: "HS256"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  PRODUCT_SERVICE_URL: "http://product-service:8002"
+  PYTHONPATH: "/app"

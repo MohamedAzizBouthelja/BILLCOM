@@ -1,0 +1,356 @@
+import { useState, useEffect } from "react"
+import { useParams, Link } from "react-router-dom"
+import { ShoppingCart, Star, Truck, Shield, RefreshCcw, Plus, Minus, Send, Trash2 } from "lucide-react"
+import { useProductStore, useCartStore, useAuthStore, formatPrice } from "../lib/store.js"
+import ProductCard from "../components/ecommerce/ProductCard.jsx"
+
+const PRODUCT_SERVICE = ""
+
+function StarPicker({ value, onChange }) {
+  const [hovered, setHovered] = useState(0)
+  return (
+    <div style={{ display: "flex", gap: "4px" }}>
+      {[1, 2, 3, 4, 5].map((n) => (
+        <button
+          key={n}
+          type="button"
+          onClick={() => onChange(n)}
+          onMouseEnter={() => setHovered(n)}
+          onMouseLeave={() => setHovered(0)}
+          style={{ background: "none", border: "none", cursor: "pointer", padding: "2px", fontSize: "1.6rem", color: (hovered || value) >= n ? "#f59e0b" : "var(--gz-border)" }}
+        >
+          ★
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function ReviewItem({ review, canDelete, onDelete }) {
+  const stars = Math.round(review.rating)
+  return (
+    <div style={{ padding: "18px 0", borderBottom: "1px solid var(--gz-border2)" }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+            <div style={{ width: "34px", height: "34px", borderRadius: "50%", background: "rgba(245,158,11,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700", color: "#f59e0b", fontSize: "0.85rem", flexShrink: 0 }}>
+              {review.username[0].toUpperCase()}
+            </div>
+            <div>
+              <div style={{ fontWeight: "600", fontSize: "0.9rem", color: "var(--gz-text)" }}>{review.username}</div>
+              <div style={{ fontSize: "0.72rem", color: "var(--gz-text2)" }}>
+                {new Date(review.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+              </div>
+            </div>
+          </div>
+          <div style={{ color: "#f59e0b", fontSize: "1rem", marginBottom: "6px" }}>{"★".repeat(stars)}{"☆".repeat(5 - stars)}</div>
+          {review.comment && <p style={{ fontSize: "0.9rem", color: "var(--gz-text2)", lineHeight: "1.6" }}>{review.comment}</p>}
+        </div>
+        {canDelete && (
+          <button onClick={() => onDelete(review.id)} title="Supprimer" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gz-text2)", padding: "4px", flexShrink: 0 }} onMouseEnter={(e) => e.currentTarget.style.color = "#ef4444"} onMouseLeave={(e) => e.currentTarget.style.color = "var(--gz-text2)"}>
+            <Trash2 size={15} />
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export default function ProductPage() {
+  const { slug } = useParams()
+  const { products } = useProductStore()
+  const { addItem } = useCartStore()
+  const { token, user, isLoggedIn } = useAuthStore()
+  const product = products.find((p) => p.slug === slug)
+  const [qty, setQty] = useState(1)
+  const [added, setAdded] = useState(false)
+
+  const [reviews, setReviews] = useState([])
+  const [reviewsLoading, setReviewsLoading] = useState(false)
+  const [newRating, setNewRating] = useState(0)
+  const [newComment, setNewComment] = useState("")
+  const [submitting, setSubmitting] = useState(false)
+  const [reviewError, setReviewError] = useState("")
+  const [reviewSuccess, setReviewSuccess] = useState(false)
+
+  const loggedIn = isLoggedIn()
+  const userId = user?.id || user?.user_id
+
+  const fetchReviews = async (productId) => {
+    setReviewsLoading(true)
+    try {
+      const res = await fetch(PRODUCT_SERVICE + `/api/v1/products/${productId}/reviews`)
+      if (res.ok) setReviews(await res.json())
+    } catch { } finally {
+      setReviewsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (product) fetchReviews(product.id)
+  }, [product?.id])
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault()
+    if (newRating === 0) { setReviewError("Veuillez choisir une note."); return }
+    setSubmitting(true)
+    setReviewError("")
+    try {
+      const res = await fetch(PRODUCT_SERVICE + `/api/v1/products/${product.id}/reviews`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify({ rating: newRating, comment: newComment.trim() || null }),
+      })
+      if (res.ok) {
+        setNewRating(0)
+        setNewComment("")
+        setReviewSuccess(true)
+        setTimeout(() => setReviewSuccess(false), 3000)
+        fetchReviews(product.id)
+      } else {
+        const err = await res.json()
+        setReviewError(err.detail || "Erreur lors de l'envoi.")
+      }
+    } catch {
+      setReviewError("Erreur de connexion.")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleDeleteReview = async (reviewId) => {
+    try {
+      const res = await fetch(PRODUCT_SERVICE + `/api/v1/products/${product.id}/reviews/${reviewId}`, {
+        method: "DELETE",
+        headers: { Authorization: "Bearer " + token },
+      })
+      if (res.ok) fetchReviews(product.id)
+    } catch { }
+  }
+
+  if (!product) {
+    return (
+      <div style={{ paddingTop: "100px", textAlign: "center", padding: "120px 24px" }}>
+        <div style={{ fontSize: "3rem", marginBottom: "16px" }}>😕</div>
+        <h2 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "700", color: "var(--gz-text)", marginBottom: "8px" }}>Product Not Found</h2>
+        <Link to="/shop" className="btn-primary" style={{ marginTop: "16px", display: "inline-flex" }}>Back to Shop</Link>
+      </div>
+    )
+  }
+
+  const related = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4)
+
+  const handleAddToCart = () => {
+    addItem(product, qty)
+    setAdded(true)
+    setTimeout(() => setAdded(false), 2000)
+  }
+
+  const badgeStyle = { display: "inline-block", padding: "4px 10px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "700", textTransform: "uppercase" }
+  const getBadge = (b) => {
+    if (b === "NEW")  return { ...badgeStyle, background: "#22c55e", color: "#fff" }
+    if (b === "HOT")  return { ...badgeStyle, background: "#ef4444", color: "#fff" }
+    if (b === "SALE") return { ...badgeStyle, background: "#f59e0b", color: "#0a0a0f" }
+    return {}
+  }
+
+  const avgRating = reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : product.rating
+  const userAlreadyReviewed = reviews.some((r) => r.user_id === userId)
+
+  return (
+    <div style={{ paddingTop: "80px", minHeight: "100vh" }}>
+      <div className="gz-container" style={{ paddingTop: "32px", paddingBottom: "64px" }}>
+
+        {/* Breadcrumb */}
+        <div style={{ fontSize: "0.8rem", color: "var(--gz-text2)", marginBottom: "28px", display: "flex", gap: "6px", alignItems: "center" }}>
+          <Link to="/" style={{ color: "var(--gz-text2)", textDecoration: "none" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "#9090a8"}>Home</Link>
+          <span>›</span>
+          <Link to="/shop" style={{ color: "var(--gz-text2)", textDecoration: "none" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "#9090a8"}>Shop</Link>
+          <span>›</span>
+          <Link to={"/shop?cat=" + product.category} style={{ color: "var(--gz-text2)", textDecoration: "none", textTransform: "capitalize" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "#9090a8"}>{product.category_name}</Link>
+          <span>›</span>
+          <span style={{ color: "var(--gz-text)" }}>{product.name}</span>
+        </div>
+
+        {/* Main grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "48px", marginBottom: "64px" }}>
+
+          {/* Image */}
+          <div>
+            <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "20px", overflow: "hidden", aspectRatio: "1", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <img src={product.image_url} alt={product.name} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            </div>
+          </div>
+
+          {/* Info */}
+          <div>
+            {product.badge && <span style={getBadge(product.badge)}>{product.badge}</span>}
+            <div style={{ fontSize: "0.8rem", color: "#f59e0b", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.1em", marginTop: "12px", marginBottom: "8px" }}>{product.category_name}</div>
+            <h1 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontSize: "1.8rem", fontWeight: "800", color: "var(--gz-text)", marginBottom: "16px", lineHeight: "1.2" }}>{product.name}</h1>
+
+            {/* Rating */}
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
+              <span className="stars" style={{ fontSize: "1rem" }}>{"★".repeat(Math.round(Number(avgRating)))}</span>
+              <span style={{ fontWeight: "700", color: "var(--gz-text)" }}>{avgRating}</span>
+              <span style={{ color: "var(--gz-text2)", fontSize: "0.85rem" }}>({reviews.length || product.reviews} avis)</span>
+            </div>
+
+            {/* Price */}
+            <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "24px" }}>
+              <span style={{ fontFamily: "IBM Plex Sans, sans-serif", fontSize: "2.2rem", fontWeight: "800", color: "#f59e0b" }}>{formatPrice(product.price)}</span>
+              {product.old_price && (
+                <div>
+                  <span style={{ fontSize: "1.1rem", color: "var(--gz-text2)", textDecoration: "line-through" }}>{formatPrice(product.old_price)}</span>
+                  <span style={{ display: "block", fontSize: "0.75rem", color: "#22c55e", fontWeight: "700" }}>
+                    Save {formatPrice(product.old_price - product.price)}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <p style={{ color: "var(--gz-text2)", fontSize: "0.95rem", lineHeight: "1.75", marginBottom: "28px" }}>{product.description}</p>
+
+            {/* Quantity + add to cart */}
+            <div style={{ display: "flex", gap: "14px", alignItems: "center", marginBottom: "20px", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", border: "1.5px solid var(--gz-border)", borderRadius: "10px", overflow: "hidden" }}>
+                <button onClick={() => setQty(Math.max(1, qty - 1))} style={{ width: "40px", height: "44px", background: "none", border: "none", color: "var(--gz-text2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "var(--gz-text2)"}>
+                  <Minus size={16} />
+                </button>
+                <span style={{ width: "40px", textAlign: "center", fontWeight: "700", color: "var(--gz-text)", fontSize: "0.95rem" }}>{qty}</span>
+                <button onClick={() => setQty(Math.min(product.stock, qty + 1))} style={{ width: "40px", height: "44px", background: "none", border: "none", color: "var(--gz-text2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "var(--gz-text2)"}>
+                  <Plus size={16} />
+                </button>
+              </div>
+              <button onClick={handleAddToCart} className="btn-primary" style={{ flex: 1, justifyContent: "center", padding: "12px 24px", minWidth: "180px" }}>
+                <ShoppingCart size={16} /> {added ? "Added!" : "Add to Cart"}
+              </button>
+              <Link to="/cart" className="btn-outline" style={{ padding: "12px 20px", justifyContent: "center" }}>View Cart</Link>
+            </div>
+
+            {/* Stock */}
+            <div style={{ fontSize: "0.85rem", color: product.stock > 10 ? "#22c55e" : "#f59e0b", marginBottom: "24px", fontWeight: "600" }}>
+              {product.stock > 10 ? "✓ In Stock" : "⚠ Only " + product.stock + " left"}
+            </div>
+
+            {/* Features */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {[
+                { icon: Truck, text: "Free delivery on orders over ৳5,000" },
+                { icon: Shield, text: "2-year manufacturer warranty" },
+                { icon: RefreshCcw, text: "7-day hassle-free returns" },
+              ].map(({ icon: Icon, text }) => (
+                <div key={text} style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "0.85rem", color: "var(--gz-text2)" }}>
+                  <Icon size={16} color="#f59e0b" />
+                  <span>{text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Reviews Section ─────────────────────────────────────────────────── */}
+        <div style={{ marginBottom: "64px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "32px" }}>
+            <h2 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontSize: "1.5rem", fontWeight: "800", color: "var(--gz-text)" }}>
+              Avis clients
+            </h2>
+            <span style={{ background: "rgba(245,158,11,0.12)", color: "#f59e0b", fontSize: "0.8rem", fontWeight: "700", padding: "4px 12px", borderRadius: "999px" }}>
+              {reviews.length} avis
+            </span>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "40px", alignItems: "start" }}>
+
+            {/* Left: list of reviews */}
+            <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "16px", padding: "24px" }}>
+              {reviewsLoading ? (
+                <div style={{ textAlign: "center", padding: "32px", color: "var(--gz-text2)" }}>Chargement des avis...</div>
+              ) : reviews.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "32px" }}>
+                  <div style={{ fontSize: "2rem", marginBottom: "12px" }}>💬</div>
+                  <p style={{ color: "var(--gz-text2)", fontSize: "0.9rem" }}>Soyez le premier à laisser un avis !</p>
+                </div>
+              ) : (
+                reviews.map((r) => (
+                  <ReviewItem
+                    key={r.id}
+                    review={r}
+                    canDelete={loggedIn && (r.user_id === userId || user?.role === "admin")}
+                    onDelete={handleDeleteReview}
+                  />
+                ))
+              )}
+            </div>
+
+            {/* Right: add review form */}
+            <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "16px", padding: "24px" }}>
+              <h3 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontSize: "1.05rem", fontWeight: "700", color: "var(--gz-text)", marginBottom: "20px" }}>
+                Laisser un avis
+              </h3>
+
+              {!loggedIn ? (
+                <div style={{ textAlign: "center", padding: "24px" }}>
+                  <p style={{ color: "var(--gz-text2)", marginBottom: "16px", fontSize: "0.9rem" }}>Connectez-vous pour laisser un avis.</p>
+                  <Link to="/login" className="btn-primary" style={{ display: "inline-flex" }}>Se connecter</Link>
+                </div>
+              ) : userAlreadyReviewed ? (
+                <div style={{ textAlign: "center", padding: "24px", color: "var(--gz-text2)", fontSize: "0.9rem" }}>
+                  ✓ Vous avez déjà laissé un avis pour ce produit.
+                </div>
+              ) : (
+                <form onSubmit={handleSubmitReview}>
+                  <div style={{ marginBottom: "18px" }}>
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--gz-text2)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                      Votre note *
+                    </label>
+                    <StarPicker value={newRating} onChange={setNewRating} />
+                  </div>
+
+                  <div style={{ marginBottom: "18px" }}>
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--gz-text2)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                      Commentaire (optionnel)
+                    </label>
+                    <textarea
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Partagez votre expérience avec ce produit..."
+                      rows={4}
+                      className="gz-input"
+                      style={{ resize: "vertical", minHeight: "100px" }}
+                    />
+                  </div>
+
+                  {reviewError && (
+                    <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: "8px", padding: "10px 14px", fontSize: "0.85rem", color: "#ef4444", marginBottom: "14px" }}>
+                      {reviewError}
+                    </div>
+                  )}
+
+                  {reviewSuccess && (
+                    <div style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: "8px", padding: "10px 14px", fontSize: "0.85rem", color: "#22c55e", marginBottom: "14px" }}>
+                      ✓ Votre avis a été publié !
+                    </div>
+                  )}
+
+                  <button type="submit" className="btn-primary" disabled={submitting} style={{ width: "100%", justifyContent: "center", opacity: submitting ? 0.7 : 1 }}>
+                    <Send size={15} /> {submitting ? "Envoi..." : "Publier l'avis"}
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Related products */}
+        {related.length > 0 && (
+          <div>
+            <h2 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontSize: "1.5rem", fontWeight: "800", color: "var(--gz-text)", marginBottom: "24px" }}>Produits similaires</h2>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px,1fr))", gap: "20px" }}>
+              {related.map((p) => <ProductCard key={p.id} product={p} />)}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
