@@ -15,6 +15,10 @@ FROM python:3.11-slim AS runner
 
 WORKDIR /app
 
+# Applique les derniers correctifs de sécurité Debian disponibles au moment du
+# build, indépendamment de la date de gel de l'image de base python:3.11-slim.
+RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
+
 # Création d'un groupe et d'un utilisateur non-root pour la sécurité
 RUN groupadd -g 1000 appgroup && \
     useradd -u 1000 -g appgroup -m -s /bin/bash appuser

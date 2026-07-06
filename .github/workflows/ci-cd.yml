@@ -213,3 +213,22 @@ jobs:
           tags: billcom-${{ matrix.service }}:${{ github.sha }}
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+      # ── Étape 6 : Scan d'image (Trivy) ────────────────────────────────
+      # --ignore-unfixed : ne bloque pas sur des CVE sans correctif upstream
+      # disponible (vérifié en local : sans ce filtre, le scan resterait rouge
+      # en permanence sur des CVE que personne ne peut corriger aujourd'hui).
+      # --severity CRITICAL : bloque uniquement sur les failles critiques,
+      # comme demandé. Les failles HIGH restent visibles dans les logs mais
+      # ne bloquent pas le build.
+      - name: Trivy vulnerability scan (report HIGH+CRITICAL)
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy image --severity CRITICAL,HIGH --ignore-unfixed \
+            billcom-${{ matrix.service }}:${{ github.sha }}
+
+      - name: Trivy vulnerability scan (block on CRITICAL)
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy image --severity CRITICAL --ignore-unfixed \
+            --exit-code 1 billcom-${{ matrix.service }}:${{ github.sha }}

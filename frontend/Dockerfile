@@ -11,7 +11,11 @@ COPY . .
 RUN npm run build
 
 # Stage 2: Serve with Nginx
-FROM nginx:1.25-alpine
+FROM nginx:1.27-alpine
+
+# Applique les derniers correctifs de sécurité Alpine disponibles au moment du
+# build, indépendamment de la date de gel de l'image de base nginx:1.27-alpine.
+RUN apk update && apk upgrade --no-cache
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
