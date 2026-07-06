@@ -7,3 +7,6 @@ __pycache__/
 .coverage
 test_*.db
 *.db
+tests/
+.env
+.git

@@ -175,3 +175,41 @@ jobs:
       - name: Run npm audit (informatif, ne bloque pas le build)
         continue-on-error: true
         run: npm audit --audit-level=moderate
+
+  # ── Étape 5 : Build Docker (multi-stage) ───────────────────────────────
+  # build + scan (étape 6) + push (étape 7) sont regroupés dans le même job :
+  # une image construite dans un job GitHub Actions n'existe plus dans le job
+  # suivant (VM isolée et jetable à chaque job), donc Trivy et le push doivent
+  # réutiliser l'image construite ici, dans les mêmes steps.
+  build:
+    name: Build Docker Image (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    needs: [lint-frontend, test, security-scan]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: user-service
+            context: services/user-service
+          - service: product-service
+            context: services/product-service
+          - service: order-service
+            context: services/order-service
+          - service: frontend
+            context: frontend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          push: false
+          load: true
+          tags: billcom-${{ matrix.service }}:${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
