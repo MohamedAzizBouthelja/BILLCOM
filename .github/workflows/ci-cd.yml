@@ -101,3 +101,26 @@ jobs:
         with:
           name: coverage-${{ matrix.service }}
           path: services/${{ matrix.service }}/coverage.xml
+
+  # ── Étape 3 : Scan de code (Bandit) ────────────────────────────────────
+  security-scan:
+    name: Security Scan - Bandit (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [user-service, product-service, order-service]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Bandit
+        run: pip install bandit==1.9.4
+
+      - name: Run Bandit
+        run: bandit -r services/${{ matrix.service }}/app

@@ -200,7 +200,7 @@ def get_order_by_id(
                 return order_data
         except HTTPException:
             raise
-        except Exception:
+        except Exception:  # nosec B110 - fallback vers la BD si le cache Redis échoue
             pass
 
     order = db.query(Order).filter(Order.id == order_id).first()

@@ -168,7 +168,10 @@ def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
     logger.info(
         f"Connexion réussie pour l'utilisateur: {user.username} (Rôle: {user.role})"
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",  # nosec B105 - pas un mot de passe
+    }
 
 
 @app.get("/api/v1/users/me", response_model=UserResponse)

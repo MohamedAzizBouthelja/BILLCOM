@@ -14,7 +14,9 @@ PRODUCT_SERVICE_URL = os.getenv("PRODUCT_SERVICE_URL", "http://localhost:8002")
 JWT_SECRET = os.getenv("JWT_SECRET", "supersecretkeychangeit")
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 PORT = int(os.getenv("PORT", "8003"))
-HOST = os.getenv("HOST", "0.0.0.0")
+HOST = os.getenv(
+    "HOST", "0.0.0.0"
+)  # nosec B104 - doit bind toutes interfaces dans le conteneur Docker
 
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")

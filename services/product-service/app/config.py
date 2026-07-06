@@ -10,4 +10,6 @@ DATABASE_URL = os.getenv(
 JWT_SECRET = os.getenv("JWT_SECRET", "supersecretkeychangeit")
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 PORT = int(os.getenv("PORT", "8002"))
-HOST = os.getenv("HOST", "0.0.0.0")
+HOST = os.getenv(
+    "HOST", "0.0.0.0"
+)  # nosec B104 - doit bind toutes interfaces dans le conteneur Docker
