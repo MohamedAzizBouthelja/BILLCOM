@@ -47,12 +47,6 @@ export default function ScrollProductCanvas() {
   const canvasRef    = useRef(null)
   const { addItem }  = useCartStore()
 
-  if (shouldReduceMotion) return (
-    <div style={{ padding: '40px', textAlign: 'center', color: '#f59e0b', fontSize: '1rem' }}>
-      Animations désactivées pour économiser les ressources sur cet appareil.
-    </div>
-  )
-
   const iphone  = useFrameLoader('iphone',  PRODUCTS.iphone.totalFrames,  PRODUCTS.iphone.ext)
   const airpods = useFrameLoader('airpods', PRODUCTS.airpods.totalFrames, PRODUCTS.airpods.ext)
 
@@ -110,6 +104,12 @@ export default function ScrollProductCanvas() {
   // Show loader until at least iPhone frames are ready
   const ready    = iphone.ready
   const progress = Math.round((iphone.progress + airpods.progress) / 2)
+
+  if (shouldReduceMotion) return (
+    <div style={{ padding: '40px', textAlign: 'center', color: '#f59e0b', fontSize: '1rem' }}>
+      Animations désactivées pour économiser les ressources sur cet appareil.
+    </div>
+  )
 
   return (
     <section ref={containerRef} className="relative h-[700vh]">

@@ -95,7 +95,9 @@ export const useAuthStore = create(
           })
           if (res.ok) set({ user: await res.json() })
           else get().logout()
-        } catch { }
+        } catch {
+          // ignore network errors, keep existing session state
+        }
       },
 
       logout: () => set({ token: "", user: null }),
@@ -164,7 +166,9 @@ export const useProductStore = create((set, get) => ({
         const items = data.items || data
         if (Array.isArray(items) && items.length > 0) set({ products: items })
       }
-    } catch { } finally {
+    } catch {
+      // ignore, keep previously loaded products
+    } finally {
       set({ loading: false })
     }
   },
@@ -238,7 +242,9 @@ export const useOrderStore = create((set) => ({
           })),
         })
       }
-    } catch { } finally {
+    } catch {
+      // ignore, keep previously loaded orders
+    } finally {
       set({ loading: false })
     }
   },

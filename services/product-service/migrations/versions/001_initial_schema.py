@@ -7,6 +7,7 @@ Create Date: 2026-07-01
 Les tables sont créées par Base.metadata.create_all() au démarrage du service.
 Cette migration établit uniquement la ligne de base pour Alembic.
 """
+
 from typing import Sequence, Union
 
 revision: str = "001"

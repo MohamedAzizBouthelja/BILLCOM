@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional, Any
 
+
 class OrderCreate(BaseModel):
     order_number: str
     product_id: Optional[int] = None
@@ -10,6 +11,7 @@ class OrderCreate(BaseModel):
     total_price: float = Field(..., gt=0)
     payment_method: str = "cod"
     shipping_address: Optional[str] = None
+
 
 class OrderResponse(BaseModel):
     id: int

@@ -10,6 +10,7 @@ if config.config_file_name is not None:
 
 # Import des modèles pour que Alembic les détecte lors de l'autogenerate
 from app.models import Base  # noqa: E402
+
 target_metadata = Base.metadata
 
 

@@ -35,7 +35,7 @@ export default function PartnerEcosystem() {
             Trusted by technology leaders and operators
           </h2>
           <p className="text-gray-500 max-w-2xl mx-auto">
-            20 years of partnerships with the world's leading telecom technology vendors and operators.
+            20 years of partnerships with the world&apos;s leading telecom technology vendors and operators.
           </p>
         </motion.div>
 
@@ -66,7 +66,7 @@ export default function PartnerEcosystem() {
           className="mt-12 text-center"
         >
           <p className="text-sm text-gray-400 max-w-lg mx-auto">
-            "Billcom has been a reliable partner for over 20 years, deploying and implementing complex BSCS Billing projects with excellence."
+            &ldquo;Billcom has been a reliable partner for over 20 years, deploying and implementing complex BSCS Billing projects with excellence.&rdquo;
           </p>
           <div className="mt-3 text-xs font-semibold text-gray-500">Jean Paul Rubio — Inetum</div>
         </motion.div>

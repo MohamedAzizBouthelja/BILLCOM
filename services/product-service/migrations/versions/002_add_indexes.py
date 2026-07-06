@@ -4,6 +4,7 @@ Revision ID: 002
 Revises: 001
 Create Date: 2026-07-01
 """
+
 from typing import Sequence, Union
 from alembic import op
 from sqlalchemy import inspect
@@ -54,15 +55,15 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index("ix_reviews_prod_user",    table_name="reviews")
-    op.drop_index("ix_reviews_username",     table_name="reviews")
-    op.drop_index("ix_reviews_product_id",   table_name="reviews")
-    op.drop_index("ix_products_cat_badge",   table_name="products")
-    op.drop_index("ix_products_feat_rat",    table_name="products")
-    op.drop_index("ix_products_cat_price",   table_name="products")
-    op.drop_index("ix_products_featured",    table_name="products")
-    op.drop_index("ix_products_stock",       table_name="products")
-    op.drop_index("ix_products_rating",      table_name="products")
-    op.drop_index("ix_products_price",       table_name="products")
-    op.drop_index("ix_products_badge",       table_name="products")
-    op.drop_index("ix_products_category",    table_name="products")
+    op.drop_index("ix_reviews_prod_user", table_name="reviews")
+    op.drop_index("ix_reviews_username", table_name="reviews")
+    op.drop_index("ix_reviews_product_id", table_name="reviews")
+    op.drop_index("ix_products_cat_badge", table_name="products")
+    op.drop_index("ix_products_feat_rat", table_name="products")
+    op.drop_index("ix_products_cat_price", table_name="products")
+    op.drop_index("ix_products_featured", table_name="products")
+    op.drop_index("ix_products_stock", table_name="products")
+    op.drop_index("ix_products_rating", table_name="products")
+    op.drop_index("ix_products_price", table_name="products")
+    op.drop_index("ix_products_badge", table_name="products")
+    op.drop_index("ix_products_category", table_name="products")

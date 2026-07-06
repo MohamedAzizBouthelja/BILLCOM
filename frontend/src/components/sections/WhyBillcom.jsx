@@ -55,7 +55,7 @@ export default function WhyBillcom() {
             Enterprise confidence with 20 years of BSS expertise
           </h2>
           <p className="text-gray-500 max-w-2xl mx-auto">
-            We don't just integrate systems — we become a long-term partner in your telecom transformation journey.
+            We don&apos;t just integrate systems — we become a long-term partner in your telecom transformation journey.
           </p>
         </motion.div>
 

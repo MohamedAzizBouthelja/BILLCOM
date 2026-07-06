@@ -1,0 +1,103 @@
+name: DevOps Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Étape 1 : Lint ──────────────────────────────────────────────────────
+  lint-python:
+    name: Lint Python (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [user-service, product-service, order-service]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install lint tools
+        run: pip install flake8==7.1.1 black==24.8.0
+
+      - name: Black — check formatting
+        run: black --check --diff services/${{ matrix.service }}
+
+      - name: Flake8 — style & error checks
+        run: flake8 services/${{ matrix.service }}
+
+  lint-frontend:
+    name: Lint Frontend (ESLint)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: ESLint
+        run: npm run lint
+
+  # ── Étape 2 : Tests unitaires + coverage ───────────────────────────────
+  test:
+    name: Tests (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    needs: lint-python
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [user-service, product-service, order-service]
+    # Pas de conteneur MySQL : les tests utilisent SQLite (comme en local),
+    # DATABASE_URL écrase le défaut MySQL codé dans app/config.py.
+    env:
+      DATABASE_URL: sqlite:///./ci_test.db
+      JWT_SECRET: ci-test-secret-key-not-for-production
+      JWT_ALGORITHM: HS256
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        working-directory: services/${{ matrix.service }}
+        run: |
+          pip install -r requirements.txt
+          pip install pytest==8.3.2 pytest-cov==5.0.0 httpx==0.27.2
+
+      - name: Run tests with coverage (seuil 70%)
+        working-directory: services/${{ matrix.service }}
+        run: |
+          pytest tests/ -v \
+            --cov=app \
+            --cov-report=term-missing \
+            --cov-report=xml \
+            --cov-fail-under=70
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.service }}
+          path: services/${{ matrix.service }}/coverage.xml

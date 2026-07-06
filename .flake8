@@ -1,0 +1,9 @@
+[flake8]
+max-line-length = 88
+extend-ignore = E203, W503
+exclude = .git,__pycache__,venv,.venv,build,dist,alembic,migrations
+per-file-ignores =
+    # tests append to sys.path before importing the app package
+    */tests/*.py: E402
+    # catalog seed data: long product descriptions and image URLs
+    */app/seed_data.py: E501

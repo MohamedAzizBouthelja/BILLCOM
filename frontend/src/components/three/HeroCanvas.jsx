@@ -5,9 +5,9 @@ import { usePerformance } from '../../hooks/usePerformance'
 export default function HeroCanvas() {
   const containerRef = useRef(null)
   const { shouldReduceMotion } = usePerformance()
-  if (shouldReduceMotion) return null
 
   useEffect(() => {
+    if (shouldReduceMotion) return
     const container = containerRef.current
     if (!container) return
 
@@ -272,7 +272,9 @@ export default function HeroCanvas() {
       })
       renderer.dispose()
     }
-  }, [])
+  }, [shouldReduceMotion])
+
+  if (shouldReduceMotion) return null
 
   return (
     <div

@@ -4,6 +4,7 @@ Revision ID: 002
 Revises: 001
 Create Date: 2026-07-01
 """
+
 from typing import Sequence, Union
 from alembic import op
 from sqlalchemy import inspect
@@ -35,8 +36,8 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index("ix_orders_user_status",   table_name="orders")
-    op.drop_index("ix_orders_created_at",    table_name="orders")
-    op.drop_index("ix_orders_status",        table_name="orders")
-    op.drop_index("ix_orders_username",      table_name="orders")
-    op.drop_index("ix_orders_order_number",  table_name="orders")
+    op.drop_index("ix_orders_user_status", table_name="orders")
+    op.drop_index("ix_orders_created_at", table_name="orders")
+    op.drop_index("ix_orders_status", table_name="orders")
+    op.drop_index("ix_orders_username", table_name="orders")
+    op.drop_index("ix_orders_order_number", table_name="orders")

@@ -1,4 +1,5 @@
 ﻿import { useState } from "react"
+import { Link } from "react-router-dom"
 import { Package, Users, ShoppingBag, TrendingUp, Settings, ArrowLeft } from "lucide-react"
 import { useAuthStore, useOrderStore, SAMPLE_PRODUCTS, formatPrice } from "../lib/store.js"
 

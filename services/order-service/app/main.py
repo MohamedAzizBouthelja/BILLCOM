@@ -14,7 +14,18 @@ from pythonjsonlogger import jsonlogger
 from typing import List, Optional
 from pydantic import BaseModel
 
-from app.config import PORT, HOST, JWT_SECRET, JWT_ALGORITHM, REDIS_HOST, REDIS_PORT, PRODUCT_SERVICE_URL, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, FRONTEND_URL
+from app.config import (
+    PORT,
+    HOST,
+    JWT_SECRET,
+    JWT_ALGORITHM,
+    REDIS_HOST,
+    REDIS_PORT,
+    PRODUCT_SERVICE_URL,
+    STRIPE_SECRET_KEY,
+    STRIPE_WEBHOOK_SECRET,
+    FRONTEND_URL,
+)
 from app.database import engine, Base, get_db
 from app.models import Order
 from app.schemas import OrderCreate, OrderResponse
@@ -22,7 +33,7 @@ from app.schemas import OrderCreate, OrderResponse
 stripe.api_key = STRIPE_SECRET_KEY
 
 log_handler = logging.StreamHandler()
-formatter = jsonlogger.JsonFormatter('%(asctime)s %(levelname)s %(name)s %(message)s')
+formatter = jsonlogger.JsonFormatter("%(asctime)s %(levelname)s %(name)s %(message)s")
 log_handler.setFormatter(formatter)
 logger = logging.getLogger("order-service")
 logger.addHandler(log_handler)
@@ -36,7 +47,7 @@ try:
         port=REDIS_PORT,
         db=0,
         decode_responses=True,
-        socket_connect_timeout=2
+        socket_connect_timeout=2,
     )
     redis_client.ping()
     logger.info("Connexion à Redis établie avec succès")
@@ -47,7 +58,7 @@ except Exception as e:
 app = FastAPI(
     title="Order Service",
     description="Microservice pour la création et le suivi des commandes",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 app.add_middleware(
@@ -80,14 +91,22 @@ def decode_access_token(token: str) -> dict:
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-def get_current_user_payload(credentials: HTTPAuthorizationCredentials = Depends(security_agent)) -> dict:
+
+def get_current_user_payload(
+    credentials: HTTPAuthorizationCredentials = Depends(security_agent),
+) -> dict:
     return decode_access_token(credentials.credentials)
+
 
 def require_role(required_role: str):
     def dependency(payload: dict = Depends(get_current_user_payload)) -> dict:
         if payload.get("role") != required_role:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Permissions insuffisantes")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Permissions insuffisantes",
+            )
         return payload
+
     return dependency
 
 
@@ -96,11 +115,13 @@ def health_check():
     return {"status": "healthy", "service": "order-service"}
 
 
-@app.post("/api/v1/orders", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
+@app.post(
+    "/api/v1/orders", response_model=OrderResponse, status_code=status.HTTP_201_CREATED
+)
 def create_order(
     order_data: OrderCreate,
     db: Session = Depends(get_db),
-    payload: dict = Depends(get_current_user_payload)
+    payload: dict = Depends(get_current_user_payload),
 ):
     username = payload.get("sub")
 
@@ -108,10 +129,21 @@ def create_order(
         try:
             response = requests.get(
                 f"{PRODUCT_SERVICE_URL}/api/v1/products/{order_data.product_id}",
-                timeout=3
+                timeout=3,
             )
             if response.status_code == 404:
-                raise HTTPException(status_code=400, detail="Le produit spécifié n'existe pas")
+                raise HTTPException(
+                    status_code=400, detail="Le produit spécifié n'existe pas"
+                )
+            if response.status_code == 200:
+                product = response.json()
+                if (
+                    order_data.quantity
+                    and product.get("stock", 0) < order_data.quantity
+                ):
+                    raise HTTPException(
+                        status_code=400, detail="Stock insuffisant pour ce produit"
+                    )
         except requests.exceptions.RequestException:
             pass
 
@@ -136,18 +168,22 @@ def create_order(
 
 @app.get("/api/v1/orders/me", response_model=list[OrderResponse])
 def get_my_orders(
-    db: Session = Depends(get_db),
-    payload: dict = Depends(get_current_user_payload)
+    db: Session = Depends(get_db), payload: dict = Depends(get_current_user_payload)
 ):
     username = payload.get("sub")
-    return db.query(Order).filter(Order.username == username).order_by(Order.created_at.desc()).all()
+    return (
+        db.query(Order)
+        .filter(Order.username == username)
+        .order_by(Order.created_at.desc())
+        .all()
+    )
 
 
 @app.get("/api/v1/orders/{order_id}", response_model=OrderResponse)
 def get_order_by_id(
     order_id: int,
     db: Session = Depends(get_db),
-    payload: dict = Depends(get_current_user_payload)
+    payload: dict = Depends(get_current_user_payload),
 ):
     username = payload.get("sub")
     role = payload.get("role")
@@ -158,7 +194,9 @@ def get_order_by_id(
             if cached:
                 order_data = json.loads(cached)
                 if role != "admin" and order_data["username"] != username:
-                    raise HTTPException(status_code=403, detail="Accès non autorisé à cette commande")
+                    raise HTTPException(
+                        status_code=403, detail="Accès non autorisé à cette commande"
+                    )
                 return order_data
         except HTTPException:
             raise
@@ -170,15 +208,16 @@ def get_order_by_id(
         raise HTTPException(status_code=404, detail="Commande non trouvée")
 
     if role != "admin" and order.username != username:
-        raise HTTPException(status_code=403, detail="Accès non autorisé à cette commande")
+        raise HTTPException(
+            status_code=403, detail="Accès non autorisé à cette commande"
+        )
 
     return order
 
 
 @app.get("/api/v1/orders", response_model=list[OrderResponse])
 def get_all_orders(
-    db: Session = Depends(get_db),
-    payload: dict = Depends(require_role("admin"))
+    db: Session = Depends(get_db), payload: dict = Depends(require_role("admin"))
 ):
     logger.info("Admin %s demande toutes les commandes", payload.get("sub"))
     return db.query(Order).all()
@@ -186,11 +225,13 @@ def get_all_orders(
 
 # ── Stripe ─────────────────────────────────────────────────────────────────
 
+
 class StripeItem(BaseModel):
     name: str
     price: float
     quantity: int
     image_url: Optional[str] = None
+
 
 class StripeCheckoutRequest(BaseModel):
     items: List[StripeItem]
@@ -225,29 +266,42 @@ def create_stripe_checkout(
 
     line_items = []
     for item in data.items:
-        line_items.append({
-            "price_data": {
-                "currency": "usd",
-                "product_data": {
-                    "name": item.name,
-                    **({"images": [item.image_url]} if item.image_url and item.image_url.startswith("http") else {}),
+        line_items.append(
+            {
+                "price_data": {
+                    "currency": "usd",
+                    "product_data": {
+                        "name": item.name,
+                        **(
+                            {"images": [item.image_url]}
+                            if item.image_url and item.image_url.startswith("http")
+                            else {}
+                        ),
+                    },
+                    "unit_amount": max(50, int(item.price)),
                 },
-                "unit_amount": max(50, int(item.price)),
-            },
-            "quantity": item.quantity,
-        })
+                "quantity": item.quantity,
+            }
+        )
 
     session = stripe.checkout.Session.create(
         payment_method_types=["card"],
         line_items=line_items,
         mode="payment",
-        success_url=f"{FRONTEND_URL}/order-success?session_id={{CHECKOUT_SESSION_ID}}&order={order_number}",
+        success_url=(
+            f"{FRONTEND_URL}/order-success"
+            f"?session_id={{CHECKOUT_SESSION_ID}}&order={order_number}"
+        ),
         cancel_url=f"{FRONTEND_URL}/checkout",
         metadata={"order_number": order_number, "username": username},
     )
 
     logger.info("Stripe session créée: %s pour commande %s", session.id, order_number)
-    return {"session_url": session.url, "session_id": session.id, "order_number": order_number}
+    return {
+        "session_url": session.url,
+        "session_id": session.id,
+        "order_number": order_number,
+    }
 
 
 @app.get("/api/v1/orders/stripe/verify/{session_id}")
@@ -298,4 +352,5 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host=HOST, port=PORT)

@@ -11,6 +11,9 @@ env/
 dist/
 build/
 .pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
 
 # Environment variables
 .env

@@ -81,7 +81,9 @@ export default function ProductPage() {
     try {
       const res = await fetch(PRODUCT_SERVICE + `/api/v1/products/${productId}/reviews`)
       if (res.ok) setReviews(await res.json())
-    } catch { } finally {
+    } catch {
+      // ignore, keep previous reviews
+    } finally {
       setReviewsLoading(false)
     }
   }
@@ -125,7 +127,9 @@ export default function ProductPage() {
         headers: { Authorization: "Bearer " + token },
       })
       if (res.ok) fetchReviews(product.id)
-    } catch { }
+    } catch {
+      // ignore, review list stays unchanged
+    }
   }
 
   if (!product) {

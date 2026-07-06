@@ -4,6 +4,7 @@ Revision ID: 002
 Revises: 001
 Create Date: 2026-07-01
 """
+
 from typing import Sequence, Union
 from alembic import op
 from sqlalchemy import inspect
@@ -30,4 +31,4 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_index("ix_users_created_at", table_name="users")
-    op.drop_index("ix_users_role",       table_name="users")
+    op.drop_index("ix_users_role", table_name="users")

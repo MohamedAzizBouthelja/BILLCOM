@@ -20,7 +20,7 @@ export default function Testimonials() {
           {TESTIMONIALS.map((t) => (
             <div key={t.name} className="gz-card" style={{ padding: "24px" }}>
               <div className="stars" style={{ marginBottom: "14px" }}>{"★".repeat(t.rating)}</div>
-              <p style={{ color: "var(--gz-text2)", fontSize: "0.9rem", lineHeight: "1.7", marginBottom: "20px" }}>"{t.text}"</p>
+              <p style={{ color: "var(--gz-text2)", fontSize: "0.9rem", lineHeight: "1.7", marginBottom: "20px" }}>&ldquo;{t.text}&rdquo;</p>
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                 <div style={{ width: "42px", height: "42px", borderRadius: "50%", background: "#f59e0b", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "800", fontSize: "0.85rem", color: "#0a0a0f", flexShrink: 0 }}>
                   {initials(t.name)}

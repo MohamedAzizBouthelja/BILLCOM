@@ -25,7 +25,9 @@ export default function OrderSuccessPage() {
           const data = await res.json()
           setPaid(data.paid)
         }
-      } catch { } finally {
+      } catch {
+        // ignore, treated as unpaid below
+      } finally {
         setVerifying(false)
       }
     }
@@ -96,7 +98,7 @@ export default function OrderSuccessPage() {
             </Link>
           )}
           <Link to="/" className="btn-primary" style={{ gap: "8px" }}>
-            <Home size={15} /> Retour à l'accueil
+            <Home size={15} /> Retour à l&apos;accueil
           </Link>
         </div>
       </div>
