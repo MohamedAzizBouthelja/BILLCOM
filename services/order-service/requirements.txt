@@ -7,9 +7,9 @@ cryptography==42.0.8
 pyjwt==2.8.0
 pymysql==1.1.1
 redis==5.0.4
-requests==2.32.3
-python-dotenv==1.0.1
+requests==2.34.2
+python-dotenv==1.2.2
 prometheus-fastapi-instrumentator==7.0.0
-python-multipart==0.0.9
+python-multipart==0.0.32
 python-json-logger==2.0.7
 stripe==9.12.0
