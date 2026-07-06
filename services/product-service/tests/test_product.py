@@ -83,8 +83,8 @@ def test_create_product_unauthorized():
     # Sans token
     response = client.post("/api/v1/products", json=payload)
     assert (
-        response.status_code == 401
-    )  # HTTPBearer retourne 401 si le token est manquant
+        response.status_code == 403
+    )  # HTTPBearer retourne 403 (pas 401) si le header Authorization est absent
 
 
 def test_create_product_forbidden_for_user():
@@ -183,7 +183,7 @@ def test_create_review_unauthorized():
     response = client.post(
         f"/api/v1/products/{product_id}/reviews", json={"rating": 4.0}
     )
-    assert response.status_code == 401
+    assert response.status_code == 403  # HTTPBearer: pas de header Authorization
 
 
 def test_create_review_product_not_found():
