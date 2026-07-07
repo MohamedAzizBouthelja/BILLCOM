@@ -1,5 +1,11 @@
 name: DevOps Pipeline
 
+# Étape 10 - Notification d'échec : pas de webhook Slack/Discord configuré.
+# GitHub envoie déjà automatiquement un email au propriétaire du repo quand un
+# workflow échoue (aucune configuration nécessaire). Si un webhook est ajouté
+# plus tard, prévoir un secret (ex: SLACK_WEBHOOK_URL) et un step `if: failure()`
+# dans chaque job, ou un job final `needs: [...]` avec `if: failure()`.
+
 on:
   push:
     branches: [main, develop]
