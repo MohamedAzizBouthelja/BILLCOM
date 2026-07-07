@@ -194,12 +194,30 @@ jobs:
         include:
           - service: user-service
             context: services/user-service
+            port: 8001
           - service: product-service
             context: services/product-service
+            port: 8002
           - service: order-service
             context: services/order-service
+            port: 8003
           - service: frontend
             context: frontend
+            port: 3000
+    # MySQL éphémère pour le smoke test (étape 9) des 3 services Python.
+    # Non utilisé par le frontend, mais un seul services: block s'applique à
+    # toute la matrice - léger surcoût de démarrage, sans impact fonctionnel.
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: smoketest
+          MYSQL_DATABASE: smoketest_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -u root -psmoketest"
+          --health-interval=5s --health-timeout=5s --health-retries=10
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -235,6 +253,54 @@ jobs:
           docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
             aquasec/trivy image --severity CRITICAL --ignore-unfixed \
             --exit-code 1 billcom-${{ matrix.service }}:${{ github.sha }}
+
+      # ── Étape 9 : Health check — smoke test du conteneur ──────────────
+      # On démarre réellement l'image construite (comme le ferait
+      # Kubernetes) et on vérifie que /health répond, au lieu de juste
+      # vérifier que le build a réussi. --network host fonctionne ici car
+      # les runners GitHub Actions sont sous Linux (support natif, contrairement
+      # à Docker Desktop Windows/Mac) : le conteneur atteint le service MySQL
+      # sur localhost:3306 directement.
+      - name: Smoke test - start container and verify /health
+        run: |
+          if [ "${{ matrix.service }}" = "frontend" ]; then
+            docker run -d --name smoke-test --network host \
+              billcom-${{ matrix.service }}:${{ github.sha }}
+            HEALTH_URL="http://127.0.0.1:${{ matrix.port }}/"
+          else
+            docker run -d --name smoke-test --network host \
+              -e DATABASE_URL="mysql+pymysql://root:smoketest@127.0.0.1:3306/smoketest_db" \
+              -e JWT_SECRET="smoke-test-secret-not-for-production" \
+              -e PYTHONPATH="/app" \
+              billcom-${{ matrix.service }}:${{ github.sha }}
+            HEALTH_URL="http://127.0.0.1:${{ matrix.port }}/health"
+          fi
+
+          echo "Waiting for container to become healthy..."
+          STATUS="starting"
+          for i in $(seq 1 20); do
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' smoke-test 2>/dev/null || echo "starting")
+            echo "  attempt $i: $STATUS"
+            if [ "$STATUS" = "healthy" ]; then break; fi
+            if [ "$STATUS" = "unhealthy" ]; then
+              echo "Container reported unhealthy"
+              docker logs smoke-test
+              exit 1
+            fi
+            sleep 3
+          done
+
+          if [ "$STATUS" != "healthy" ]; then
+            echo "Container did not become healthy in time"
+            docker logs smoke-test
+            exit 1
+          fi
+
+          curl -f "$HEALTH_URL"
+
+      - name: Clean up smoke test container
+        if: always()
+        run: docker rm -f smoke-test || true
 
       # ── Étape 7 : Push vers GitHub Container Registry ─────────────────
       # Seulement sur main (pas sur les PR) : on ne publie pas d'image pour

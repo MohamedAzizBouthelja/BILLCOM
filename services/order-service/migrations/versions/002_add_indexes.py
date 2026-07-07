@@ -8,6 +8,7 @@ Create Date: 2026-07-01
 from typing import Sequence, Union
 from alembic import op
 from sqlalchemy import inspect
+from sqlalchemy.exc import NoSuchTableError
 
 revision: str = "002"
 down_revision: Union[str, None] = "001"
@@ -17,10 +18,23 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def _existing_indexes(table: str) -> set:
     bind = op.get_bind()
-    return {idx["name"] for idx in inspect(bind).get_indexes(table)}
+    try:
+        return {idx["name"] for idx in inspect(bind).get_indexes(table)}
+    except NoSuchTableError:
+        # Table tout juste créée dans la même migration "upgrade head" :
+        # pas encore visible en réflexion, donc pas d'index existants.
+        return set()
 
 
 def upgrade() -> None:
+    bind = op.get_bind()
+    if not inspect(bind).has_table("orders"):
+        # Base neuve : la migration 001 ne crée pas les tables (elle est
+        # vide), c'est Base.metadata.create_all() qui s'en charge juste après
+        # les migrations. Le modèle déclare déjà ces mêmes index (models.py),
+        # donc rien à faire ici tant que la table n'existe pas encore.
+        return
+
     existing = _existing_indexes("orders")
 
     if "ix_orders_order_number" not in existing:
