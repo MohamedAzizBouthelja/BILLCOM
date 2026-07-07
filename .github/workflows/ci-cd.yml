@@ -260,3 +260,22 @@ jobs:
           docker tag billcom-${{ matrix.service }}:${{ github.sha }} $IMAGE:latest
           docker push $IMAGE:${{ github.sha }}
           docker push $IMAGE:latest
+
+  # ── Étape 8 : Validation des manifests Kubernetes ──────────────────────
+  # Un runner GitHub Actions cloud ne peut pas atteindre le Minikube local
+  # (WSL2) sur lequel ce projet est réellement déployé (voir DEMARRAGE_RAPIDE_V2.md).
+  # On valide donc que les manifests sont corrects (syntaxe + schéma Kubernetes)
+  # sans tenter un vrai déploiement. Le déploiement réel reste une étape
+  # manuelle sur la machine du développeur.
+  validate-k8s:
+    name: Validate Kubernetes manifests
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate manifests (kubeconform, hors-ligne, sans cluster)
+        run: |
+          docker run --rm -v ${{ github.workspace }}/k8s/base:/k8s \
+            ghcr.io/yannh/kubeconform:latest -strict -summary /k8s
