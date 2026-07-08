@@ -14,3 +14,10 @@ PORT = int(os.getenv("PORT", "8001"))
 HOST = os.getenv(
     "HOST", "0.0.0.0"
 )  # nosec B104 - doit bind toutes interfaces dans le conteneur Docker
+
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
+
+# Verrouillage de compte après tentatives de connexion échouées répétées
+LOGIN_MAX_ATTEMPTS = int(os.getenv("LOGIN_MAX_ATTEMPTS", "5"))
+LOGIN_LOCKOUT_SECONDS = int(os.getenv("LOGIN_LOCKOUT_SECONDS", "900"))  # 15 min

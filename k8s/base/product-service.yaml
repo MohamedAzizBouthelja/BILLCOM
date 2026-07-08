@@ -17,6 +17,13 @@ spec:
         prometheus.io/path: "/metrics"
         prometheus.io/port: "8002"
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       initContainers:
         - name: wait-for-mysql
           image: busybox:1.36
@@ -25,11 +32,19 @@ spec:
         - name: product-service
           image: billcom/product-service:latest
           imagePullPolicy: Never
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
           ports:
             - containerPort: 8002
           env:
             - name: DATABASE_URL
-              value: mysql+pymysql://root:rootpassword@mysql:3306/product_db
+              valueFrom:
+                secretKeyRef:
+                  name: billcom-secrets
+                  key: product-service-database-url
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
@@ -60,6 +75,12 @@ spec:
               port: 8002
             initialDelaySeconds: 10
             periodSeconds: 5
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service

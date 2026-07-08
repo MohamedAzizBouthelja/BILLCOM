@@ -1,0 +1,307 @@
+# Zero Trust : tout le trafic est bloqué par défaut (deny-all), puis
+# ré-autorisé explicitement pod par pod, selon le graphe de trafic réel
+# (vérifié dans le code, pas seulement supposé) :
+#
+#   internet ──▶ gateway ──▶ user-service ────▶ mysql
+#                        │             └──────▶ redis
+#                        ├──▶ product-service ─▶ mysql
+#                        ├──▶ order-service ───▶ mysql
+#                        │             ├───────▶ redis
+#                        │             ├───────▶ product-service (vérif stock/prix)
+#                        │             └───────▶ internet:443 (Stripe)
+#                        └──▶ frontend
+#   monitoring (namespace) ──▶ user/product/order-service (scrape /metrics), mysql (mysql-exporter)
+#
+# Prérequis : le CNI du cluster doit appliquer les NetworkPolicy (ce n'est
+# PAS le cas du driver minikube par défaut — démarrer avec
+# `minikube start --cni=calico`, sinon ces règles sont inertes).
+#
+# Piège classique évité : un deny-all bloque aussi la résolution DNS
+# (CoreDNS dans kube-system) si on n'ajoute pas explicitement une règle
+# d'egress pour le port 53 — sans ça, plus aucun service ne peut résoudre
+# les noms "mysql", "redis", etc.
+#
+# Risque connu, non vérifiable sans cluster : selon le CNI, les probes
+# kubelet (readiness/liveness httpGet) proviennent de l'IP du node, pas
+# d'un pod — certains CNI ne les exemptent pas automatiquement des
+# NetworkPolicy. À surveiller après déploiement (symptôme : pods bloqués
+# en "NotReady" avec des probe failures malgré une application saine).
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all
+  namespace: billcom
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+
+---
+# Sans cette règle, aucun pod ne peut résoudre de nom DNS interne une fois
+# le deny-all appliqué (CoreDNS tourne dans kube-system).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-egress
+  namespace: billcom
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+
+---
+# Gateway : point d'entrée public (NodePort). Ingress ouvert (trafic externe,
+# pas un pod du cluster) ; egress restreint aux 4 services qu'il proxifie.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-gateway
+  namespace: billcom
+spec:
+  podSelector:
+    matchLabels:
+      app: gateway
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - {}
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: user-service
+      ports:
+        - port: 8001
+    - to:
+        - podSelector:
+            matchLabels:
+              app: product-service
+      ports:
+        - port: 8002
+    - to:
+        - podSelector:
+            matchLabels:
+              app: order-service
+      ports:
+        - port: 8003
+    - to:
+        - podSelector:
+            matchLabels:
+              app: frontend
+      ports:
+        - port: 3000
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend
+  namespace: billcom
+spec:
+  podSelector:
+    matchLabels:
+      app: frontend
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: gateway
+      ports:
+        - port: 3000
+
+---
+# user-service : reçoit du gateway + du scraping Prometheus (namespace
+# monitoring) ; appelle mysql et redis.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-user-service
+  namespace: billcom
+spec:
+  podSelector:
+    matchLabels:
+      app: user-service
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: gateway
+      ports:
+        - port: 8001
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - port: 8001
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: mysql
+      ports:
+        - port: 3306
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - port: 6379
+
+---
+# product-service : reçoit du gateway, d'order-service (vérif stock/prix) et
+# du scraping Prometheus ; appelle uniquement mysql.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-product-service
+  namespace: billcom
+spec:
+  podSelector:
+    matchLabels:
+      app: product-service
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: gateway
+      ports:
+        - port: 8002
+    - from:
+        - podSelector:
+            matchLabels:
+              app: order-service
+      ports:
+        - port: 8002
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - port: 8002
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: mysql
+      ports:
+        - port: 3306
+
+---
+# order-service : reçoit du gateway + Prometheus ; appelle mysql, redis,
+# product-service, et Stripe en externe (paiement — pas de podSelector
+# possible pour une cible hors cluster, donc egress ouvert sur 443 uniquement).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-order-service
+  namespace: billcom
+spec:
+  podSelector:
+    matchLabels:
+      app: order-service
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: gateway
+      ports:
+        - port: 8003
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - port: 8003
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: mysql
+      ports:
+        - port: 3306
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - port: 6379
+    - to:
+        - podSelector:
+            matchLabels:
+              app: product-service
+      ports:
+        - port: 8002
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 443
+
+---
+# mysql : reçoit des 3 services applicatifs + de mysqld-exporter (namespace
+# monitoring). N'initie aucune connexion sortante (hors DNS, via la règle
+# globale allow-dns-egress).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-mysql
+  namespace: billcom
+spec:
+  podSelector:
+    matchLabels:
+      app: mysql
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: user-service
+        - podSelector:
+            matchLabels:
+              app: product-service
+        - podSelector:
+            matchLabels:
+              app: order-service
+      ports:
+        - port: 3306
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - port: 3306
+
+---
+# redis : reçoit uniquement de user-service et order-service.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-redis
+  namespace: billcom
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: user-service
+        - podSelector:
+            matchLabels:
+              app: order-service
+      ports:
+        - port: 6379

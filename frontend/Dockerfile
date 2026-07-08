@@ -20,9 +20,16 @@ RUN apk update && apk upgrade --no-cache
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# /var/cache/nginx (worker temp buffers) and /run (nginx.pid) are root-owned
+# in the base image; the "nginx" user (uid 101) needs write access to both
+# since the container runs as non-root from now on.
+RUN chown -R nginx:nginx /var/cache/nginx /run
+
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD wget --quiet --spider http://127.0.0.1:3000/ || exit 1
+
+USER nginx
 
 CMD ["nginx", "-g", "daemon off;"]

@@ -72,6 +72,16 @@ spec:
             summary: "Taux d'échec de connexion élevé"
             description: "Plus de 0,5 échec/s depuis 2 minutes."
 
+        - alert: AccountLockoutSurge
+          expr: |
+            increase(auth_login_lockout_total{namespace="billcom"}[5m]) > 5
+          for: 0m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Vague de verrouillages de comptes détectée"
+            description: "Plus de 5 comptes verrouillés (5 échecs consécutifs) en 5 minutes — signe d'un brute-force ciblé plutôt que de trafic légitime raté."
+
     # ────────────────────────────────────────────────────────────
     # MySQL
     # ────────────────────────────────────────────────────────────

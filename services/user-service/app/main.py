@@ -1,4 +1,5 @@
 import logging
+import redis
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -7,7 +8,14 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from prometheus_client import Counter
 from pythonjsonlogger import jsonlogger
 
-from app.config import PORT, HOST
+from app.config import (
+    PORT,
+    HOST,
+    REDIS_HOST,
+    REDIS_PORT,
+    LOGIN_MAX_ATTEMPTS,
+    LOGIN_LOCKOUT_SECONDS,
+)
 from app.database import engine, Base, get_db
 from app.models import User
 from app.schemas import UserCreate, UserResponse, UserLogin, Token
@@ -33,10 +41,16 @@ auth_register = Counter(
     "User registrations",
     ["role"],
 )
+auth_login_lockout = Counter(
+    "auth_login_lockout_total",
+    "Login attempts rejected because the account is locked out",
+)
 
 # Configuration des logs structurés en JSON
 log_handler = logging.StreamHandler()
-formatter = jsonlogger.JsonFormatter("%(asctime)s %(levelname)s %(name)s %(message)s")
+formatter = jsonlogger.JsonFormatter(
+    "%(asctime)s %(levelname)s %(name)s %(message)s %(event)s %(username)s"
+)
 log_handler.setFormatter(formatter)
 logger = logging.getLogger("user-service")
 logger.addHandler(log_handler)
@@ -44,6 +58,26 @@ logger.setLevel(logging.INFO)
 
 # Initialisation de la base de données (création automatique des tables)
 Base.metadata.create_all(bind=engine)
+
+# Connexion Redis — compteur de tentatives de connexion échouées (lockout).
+# Fail-open : si Redis est indisponible, le lockout est désactivé mais le
+# login continue de fonctionner (le rate limiting Nginx reste la protection
+# de base contre le brute-force dans ce cas).
+try:
+    redis_client = redis.Redis(
+        host=REDIS_HOST,
+        port=REDIS_PORT,
+        db=0,
+        decode_responses=True,
+        socket_connect_timeout=2,
+    )
+    redis_client.ping()
+    logger.info("Connexion à Redis établie avec succès")
+except Exception as e:
+    redis_client = None
+    logger.warning(
+        "Connexion à Redis échouée: %s. Le lockout de compte sera désactivé.", e
+    )
 
 
 app = FastAPI(
@@ -142,9 +176,40 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 
+def _lockout_key(username: str) -> str:
+    return f"login_lockout:{username}"
+
+
 @app.post("/api/v1/users/login", response_model=Token)
 def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
     logger.info(f"Tentative de connexion pour l'utilisateur: {login_data.username}")
+
+    lockout_key = _lockout_key(login_data.username)
+
+    # Vérifie le verrouillage AVANT de toucher la base ou de vérifier le mot de
+    # passe : un compte verrouillé ne doit pas coûter une requête DB / bcrypt.
+    if redis_client:
+        try:
+            attempts = redis_client.get(lockout_key)
+        except Exception as e:
+            attempts = None
+            logger.warning("Lecture Redis échouée (lockout ignoré): %s", e)
+        if attempts and int(attempts) >= LOGIN_MAX_ATTEMPTS:
+            ttl = redis_client.ttl(lockout_key)
+            auth_login_lockout.inc()
+            logger.warning(
+                "Compte verrouillé après trop d'échecs de connexion",
+                extra={"event": "AUTH_LOCKOUT", "username": login_data.username},
+            )
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=(
+                    "Compte temporairement verrouillé suite à trop de tentatives "
+                    "échouées. Réessayez plus tard."
+                ),
+                headers={"Retry-After": str(max(ttl, 1))},
+            )
+
     user = (
         db.query(User)
         .filter(
@@ -155,18 +220,36 @@ def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
     if not user or not verify_password(login_data.password, user.hashed_password):
         auth_login_failure.inc()
         logger.warning(
-            f"Échec de la connexion pour l'utilisateur: {login_data.username}"
+            "Échec de la connexion pour l'utilisateur: %s",
+            login_data.username,
+            extra={"event": "AUTH_FAILURE", "username": login_data.username},
         )
+        if redis_client:
+            try:
+                remaining_attempts = redis_client.incr(lockout_key)
+                if remaining_attempts == 1:
+                    redis_client.expire(lockout_key, LOGIN_LOCKOUT_SECONDS)
+            except Exception as e:
+                logger.warning("Écriture Redis échouée (lockout ignoré): %s", e)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Nom d'utilisateur ou mot de passe incorrect",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    if redis_client:
+        try:
+            redis_client.delete(lockout_key)
+        except Exception as e:
+            logger.warning("Suppression du compteur Redis échouée: %s", e)
+
     access_token = create_access_token(data={"sub": user.username, "role": user.role})
     auth_login_success.labels(role=user.role).inc()
     logger.info(
-        f"Connexion réussie pour l'utilisateur: {user.username} (Rôle: {user.role})"
+        "Connexion réussie pour l'utilisateur: %s (Rôle: %s)",
+        user.username,
+        user.role,
+        extra={"event": "AUTH_SUCCESS", "username": user.username},
     )
     return {
         "access_token": access_token,

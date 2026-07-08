@@ -1,16 +1,17 @@
 version: '3.8'
 
 services:
-  # Base de données MySQL partagée mais avec bases de données isolées
+  # MySQL — une base de données isolée par service, chacune avec son propre
+  # utilisateur restreint (voir db-init/01-databases.sql et 02-create-users.sh).
   mysql:
     image: mysql:8.0
     container_name: devops-mysql
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_USER: devuser
-      MYSQL_PASSWORD: devpassword
-      MYSQL_DATABASE: ecommerce_db
+      USER_SVC_PASSWORD: userpass_dev
+      PRODUCT_SVC_PASSWORD: productpass_dev
+      ORDER_SVC_PASSWORD: orderpass_dev
     ports:
       - "3307:3306"
     volumes:
@@ -19,7 +20,7 @@ services:
     networks:
       - ecommerce-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "devuser", "-pdevpassword", "--connect_timeout=5"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword", "--connect_timeout=5"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -49,12 +50,16 @@ services:
       dockerfile: Dockerfile
     restart: always
     environment:
-      - DATABASE_URL=mysql+pymysql://root:bymabpudg30@host.docker.internal:3306/user_db
+      - DATABASE_URL=mysql+pymysql://user_svc:userpass_dev@mysql:3306/user_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - JWT_SECRET=supersecretkeychangeit
       - JWT_ALGORITHM=HS256
       - PORT=8001
       - PYTHONPATH=/app
     depends_on:
+      mysql:
+        condition: service_healthy
       redis:
         condition: service_healthy
     networks:
@@ -68,12 +73,14 @@ services:
       dockerfile: Dockerfile
     restart: always
     environment:
-      - DATABASE_URL=mysql+pymysql://root:bymabpudg30@host.docker.internal:3306/product_db
+      - DATABASE_URL=mysql+pymysql://product_svc:productpass_dev@mysql:3306/product_db
       - JWT_SECRET=supersecretkeychangeit
       - JWT_ALGORITHM=HS256
       - PORT=8002
       - PYTHONPATH=/app
     depends_on:
+      mysql:
+        condition: service_healthy
       redis:
         condition: service_healthy
     networks:
@@ -87,7 +94,7 @@ services:
       dockerfile: Dockerfile
     restart: always
     environment:
-      - DATABASE_URL=mysql+pymysql://root:bymabpudg30@host.docker.internal:3306/order_db
+      - DATABASE_URL=mysql+pymysql://order_svc:orderpass_dev@mysql:3306/order_db
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - PRODUCT_SERVICE_URL=http://product-service:8002
@@ -96,6 +103,8 @@ services:
       - PORT=8003
       - PYTHONPATH=/app
     depends_on:
+      mysql:
+        condition: service_healthy
       redis:
         condition: service_healthy
     networks:
@@ -119,8 +128,8 @@ services:
     container_name: api-gateway
     restart: always
     ports:
-      - "80:80"
-      - "443:443"
+      - "80:8080"
+      - "443:8443"
     depends_on:
       - user-service
       - product-service

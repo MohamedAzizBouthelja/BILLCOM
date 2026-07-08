@@ -28,6 +28,23 @@ spec:
       containers:
         - name: mysql
           image: mysql:8.0
+          # PAS de runAsNonRoot / readOnlyRootFilesystem ici, contrairement aux
+          # autres Deployments : l'image officielle mysql doit démarrer root
+          # pour chown le volume de données puis initialiser les comptes
+          # (root, USER_SVC_PASSWORD...) avant de dropper ses privilèges en
+          # interne vers l'utilisateur "mysql" (via gosu). Testé en réel :
+          # - forcer --user 999:999 dès le départ fait ignorer silencieusement
+          #   MYSQL_ROOT_PASSWORD (root créé avec un mot de passe vide) ;
+          # - capabilities drop:[ALL] pur casse même l'aide "mysqld --help"
+          #   (setgid: Operation not permitted).
+          # Ces 4 capabilities sont le minimum vérifié nécessaire à
+          # l'entrypoint (chown du volume + gosu vers l'utilisateur mysql) ;
+          # tout le reste est droppé.
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+              add: ["SETUID", "SETGID", "CHOWN", "DAC_OVERRIDE"]
           ports:
             - containerPort: 3306
           env:
@@ -36,36 +53,49 @@ spec:
                 secretKeyRef:
                   name: billcom-secrets
                   key: mysql-root-password
-            - name: MYSQL_USER
+            - name: USER_SVC_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: billcom-secrets
-                  key: mysql-user
-            - name: MYSQL_PASSWORD
+                  key: user-svc-password
+            - name: PRODUCT_SVC_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: billcom-secrets
-                  key: mysql-password
-            - name: MYSQL_DATABASE
-              value: ecommerce_db
+                  key: product-svc-password
+            - name: ORDER_SVC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: billcom-secrets
+                  key: order-svc-password
           volumeMounts:
             - name: mysql-data
               mountPath: /var/lib/mysql
+            - name: mysql-init-scripts
+              mountPath: /docker-entrypoint-initdb.d
+          # $MYSQL_ROOT_PASSWORD est développé par le shell lancé dans le
+          # conteneur (donc lu depuis l'env réel), PAS par Kubernetes : la
+          # syntaxe $(VAR) de Kubernetes ne s'applique qu'à command/args, pas
+          # aux probes exec.
           readinessProbe:
             exec:
-              command: ["mysqladmin", "ping", "-h", "localhost", "-u", "devuser", "-pdevpassword"]
+              command: ["sh", "-c", "mysqladmin ping -h localhost -u root -p\"$MYSQL_ROOT_PASSWORD\""]
             initialDelaySeconds: 20
             periodSeconds: 5
             failureThreshold: 10
           livenessProbe:
             exec:
-              command: ["mysqladmin", "ping", "-h", "localhost", "-u", "devuser", "-pdevpassword"]
+              command: ["sh", "-c", "mysqladmin ping -h localhost -u root -p\"$MYSQL_ROOT_PASSWORD\""]
             initialDelaySeconds: 30
             periodSeconds: 10
       volumes:
         - name: mysql-data
           persistentVolumeClaim:
             claimName: mysql-pvc
+        - name: mysql-init-scripts
+          configMap:
+            name: mysql-init-scripts
+            defaultMode: 0755
 ---
 apiVersion: v1
 kind: Service

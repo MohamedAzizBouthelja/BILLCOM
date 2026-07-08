@@ -1,3 +1,8 @@
+# Équivalent K8s de gateway/nginx.conf (utilisé par l'image Docker en local).
+# Les deux doivent rester en phase pour la sécurité (rate limiting, headers) —
+# seules différences volontaires : le resolver (CoreDNS au lieu du DNS interne
+# Docker) et le nom d'hôte du frontend (Service K8s "frontend" au lieu du
+# container_name "ecommerce-frontend" de docker-compose).
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -30,8 +35,11 @@ data:
         # Kubernetes CoreDNS resolver
         resolver kube-dns.kube-system.svc.cluster.local valid=10s ipv6=off;
 
-        limit_req_zone $binary_remote_addr zone=auth_limit:10m rate=10r/s;
-        limit_req_zone $binary_remote_addr zone=api_limit:10m  rate=30r/s;
+        # Rate limiting zones
+        limit_req_zone $binary_remote_addr zone=auth_limit:10m  rate=10r/s;
+        limit_req_zone $binary_remote_addr zone=api_limit:10m   rate=30r/s;
+        # Dedicated, stricter zone for the login endpoint (brute-force protection).
+        limit_req_zone $binary_remote_addr zone=login_limit:10m rate=10r/s;
 
         upstream user_service {
             least_conn;
@@ -56,42 +64,18 @@ data:
             keepalive 8;
         }
 
+        # ── HTTP → HTTPS redirect ──
+        # Unprivileged port: the container runs as non-root (securityContext).
+        # The public 80/443 ports are restored by the Service (port -> targetPort).
         server {
-            listen 80;
-            server_name localhost;
-
-            proxy_http_version 1.1;
-            proxy_set_header Host              $host;
-            proxy_set_header X-Real-IP         $remote_addr;
-            proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_set_header Authorization     $http_authorization;
-            proxy_read_timeout 60s;
-
-            location /api/v1/users {
-                proxy_pass http://user_service;
-            }
-
-            location /api/v1/products {
-                proxy_pass http://product_service;
-            }
-
-            location /api/v1/orders {
-                proxy_pass http://order_service;
-            }
-
-            location = /health {
-                default_type application/json;
-                return 200 '{"gateway":"healthy"}';
-            }
-
-            location / {
-                proxy_pass http://frontend_app;
-            }
+            listen 8080;
+            server_name _;
+            return 301 https://$host$request_uri;
         }
 
+        # ── HTTPS Gateway ──
         server {
-            listen 443 ssl;
+            listen 8443 ssl;
             server_name localhost;
 
             ssl_certificate     /etc/nginx/certs/cert.pem;
@@ -119,6 +103,14 @@ data:
             proxy_set_header Authorization     $http_authorization;
             proxy_read_timeout 60s;
             proxy_send_timeout 60s;
+
+            # ── Login (brute-force protection) ── exact match, evaluated
+            # before the prefix location below regardless of declaration order.
+            location = /api/v1/users/login {
+                limit_req zone=login_limit burst=5 nodelay;
+                limit_req_status 429;
+                proxy_pass http://user_service;
+            }
 
             location /api/v1/users {
                 limit_req zone=auth_limit burst=20 nodelay;
