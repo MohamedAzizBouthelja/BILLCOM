@@ -1,0 +1,24 @@
+# Déclare à ArgoCD : surveille k8s/base sur main, garde le cluster synchronisé.
+# Une fois appliqué, c'est CETTE ressource qui devient la source de vérité pour
+# le déploiement — plus besoin (et plus question) de kubectl apply manuel sur
+# les fichiers de k8s/base, voir PHASE8_GITOPS.md.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: billcom-platform
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/MohamedAzizBouthelja/BILLCOM.git
+    targetRevision: main
+    path: k8s/base
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: billcom
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
