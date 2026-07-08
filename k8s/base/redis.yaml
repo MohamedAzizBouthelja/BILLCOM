@@ -17,6 +17,11 @@ metadata:
   namespace: billcom
 spec:
   replicas: 1
+  # Même raisonnement que mysql.yaml : PVC ReadWriteOnce à réplica unique,
+  # Recreate évite que deux pods redis se disputent le même volume pendant
+  # un rollout.
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: redis

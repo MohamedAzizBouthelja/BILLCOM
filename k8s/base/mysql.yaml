@@ -17,6 +17,14 @@ metadata:
   namespace: billcom
 spec:
   replicas: 1
+  # RollingUpdate (le défaut) crée le nouveau pod AVANT de tuer l'ancien —
+  # avec un PVC ReadWriteOnce à réplica unique, les deux pods peuvent se
+  # retrouver sur le même nœud à ouvrir ibdata1 en même temps : le nouveau
+  # échoue avec "Unable to lock ./ibdata1 error: 11" (EAGAIN), trouvé en
+  # conditions réelles lors du premier rollout via ArgoCD. Recreate tue
+  # l'ancien pod avant de créer le nouveau, pas de chevauchement possible.
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: mysql

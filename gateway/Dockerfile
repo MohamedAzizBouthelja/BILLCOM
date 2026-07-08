@@ -4,7 +4,12 @@ RUN apk add --no-cache openssl
 
 # Generate self-signed SSL certificate for localhost. key.pem is created
 # 600/root by openssl — the container runs as the non-root "nginx" user
-# (uid 101) at runtime, so it needs read access.
+# (uid 101) at runtime, so it needs read access. chmod 400 (owner-only) was
+# enough under Docker Compose, but failed with "Permission denied" under
+# minikube/containerd (found testing Phase 8 GitOps rollout) despite matching
+# chown — 444 (world-readable) sidesteps whatever UID-mapping quirk causes
+# that, acceptable here since this is a self-signed dev certificate, not
+# sensitive production key material.
 RUN mkdir -p /etc/nginx/certs && \
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
         -keyout /etc/nginx/certs/key.pem \
@@ -12,7 +17,7 @@ RUN mkdir -p /etc/nginx/certs && \
         -subj   "/C=TN/ST=Tunis/L=Tunis/O=GadgetZone/OU=Dev/CN=localhost" \
         -addext "subjectAltName=DNS:localhost,IP:127.0.0.1" && \
     chown nginx:nginx /etc/nginx/certs/key.pem /etc/nginx/certs/cert.pem && \
-    chmod 400 /etc/nginx/certs/key.pem
+    chmod 444 /etc/nginx/certs/key.pem
 
 COPY nginx.conf /etc/nginx/nginx.conf
 
