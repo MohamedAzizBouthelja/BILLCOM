@@ -73,7 +73,10 @@ spec:
             - name: STRIPE_SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: billcom-secrets
+                  # Secret créé hors Git (kubectl create secret), volontairement
+                  # absent de k8s/base — ArgoCD ne le voit pas, donc selfHeal/prune
+                  # ne peuvent jamais l'écraser ou le supprimer.
+                  name: billcom-secrets-external
                   key: stripe-secret-key
             - name: FRONTEND_URL
               value: "https://localhost:8443"
