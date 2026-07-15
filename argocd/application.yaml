@@ -22,3 +22,12 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+  # La vraie clé Stripe est appliquée hors Git (kubectl create secret), jamais
+  # commitée en clair. Sans ceci, selfHeal l'écraserait avec le placeholder
+  # de k8s/base/secrets.yaml au prochain sync.
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: billcom-secrets
+      jsonPointers:
+        - /data/stripe-secret-key
