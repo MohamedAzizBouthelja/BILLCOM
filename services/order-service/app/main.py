@@ -297,7 +297,9 @@ def create_stripe_checkout(
             metadata={"order_number": order_number, "username": username},
         )
     except stripe.error.StripeError as e:
-        logger.error("Erreur Stripe pour commande %s: %s", order_number, e.user_message or str(e))
+        logger.error(
+            "Erreur Stripe pour commande %s: %s", order_number, e.user_message or str(e)
+        )
         raise HTTPException(status_code=502, detail=e.user_message or "Erreur Stripe")
 
     logger.info("Stripe session créée: %s pour commande %s", session.id, order_number)
