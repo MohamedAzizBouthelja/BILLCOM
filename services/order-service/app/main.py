@@ -284,17 +284,21 @@ def create_stripe_checkout(
             }
         )
 
-    session = stripe.checkout.Session.create(
-        payment_method_types=["card"],
-        line_items=line_items,
-        mode="payment",
-        success_url=(
-            f"{FRONTEND_URL}/order-success"
-            f"?session_id={{CHECKOUT_SESSION_ID}}&order={order_number}"
-        ),
-        cancel_url=f"{FRONTEND_URL}/checkout",
-        metadata={"order_number": order_number, "username": username},
-    )
+    try:
+        session = stripe.checkout.Session.create(
+            payment_method_types=["card"],
+            line_items=line_items,
+            mode="payment",
+            success_url=(
+                f"{FRONTEND_URL}/order-success"
+                f"?session_id={{CHECKOUT_SESSION_ID}}&order={order_number}"
+            ),
+            cancel_url=f"{FRONTEND_URL}/checkout",
+            metadata={"order_number": order_number, "username": username},
+        )
+    except stripe.error.StripeError as e:
+        logger.error("Erreur Stripe pour commande %s: %s", order_number, e.user_message or str(e))
+        raise HTTPException(status_code=502, detail=e.user_message or "Erreur Stripe")
 
     logger.info("Stripe session créée: %s pour commande %s", session.id, order_number)
     return {
@@ -313,7 +317,10 @@ def verify_stripe_payment(
     if not STRIPE_SECRET_KEY:
         raise HTTPException(status_code=503, detail="Stripe non configuré")
 
-    session = stripe.checkout.Session.retrieve(session_id)
+    try:
+        session = stripe.checkout.Session.retrieve(session_id)
+    except stripe.error.StripeError as e:
+        raise HTTPException(status_code=502, detail=e.user_message or "Erreur Stripe")
     order_number = session.metadata.get("order_number")
 
     if session.payment_status == "paid":

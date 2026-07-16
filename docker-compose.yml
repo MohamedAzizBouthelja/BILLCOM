@@ -102,6 +102,7 @@ services:
       - JWT_ALGORITHM=HS256
       - PORT=8003
       - PYTHONPATH=/app
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
     depends_on:
       mysql:
         condition: service_healthy
