@@ -33,8 +33,8 @@ export default function NotFoundPage() {
           This gadget wandered off the shelf.
         </h1>
         <p style={{ color: "var(--gz-text2)", fontSize: "0.95rem", lineHeight: "1.7", marginBottom: "32px" }}>
-          The page you're looking for doesn't exist, got moved, or never shipped.
-          Let's get you back to the catalog.
+          The page you&apos;re looking for doesn&apos;t exist, got moved, or never shipped.
+          Let&apos;s get you back to the catalog.
         </p>
 
         <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
