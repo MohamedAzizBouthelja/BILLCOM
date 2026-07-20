@@ -52,7 +52,7 @@ export default function OrderSuccessPage() {
           <CheckCircle size={44} color={paid ? "#22c55e" : "#ef4444"} />
         </div>
 
-        <h1 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontSize: "2rem", fontWeight: "800", color: "var(--gz-text)", marginBottom: "12px" }}>
+        <h1 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "2rem", fontWeight: "800", color: "var(--gz-text)", marginBottom: "12px" }}>
           {paid ? "Commande confirmée ! 🎉" : "Paiement non confirmé"}
         </h1>
         <p style={{ color: "var(--gz-text2)", fontSize: "1rem", lineHeight: "1.7", marginBottom: "28px" }}>
@@ -65,7 +65,7 @@ export default function OrderSuccessPage() {
           <div style={{ fontSize: "0.75rem", color: "var(--gz-text2)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "6px" }}>
             Numéro de commande
           </div>
-          <div style={{ fontFamily: "IBM Plex Sans, sans-serif", fontSize: "1.4rem", fontWeight: "800", color: "#f59e0b" }}>
+          <div style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "1.4rem", fontWeight: "800", color: "#f59e0b" }}>
             {orderNum}
           </div>
           {sessionId && (

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-export function useScrollReveal(threshold = 0.15) {
+export function useScrollReveal(threshold = 0.15, once = false) {
   const ref = useRef(null)
   const [isVisible, setIsVisible] = useState(false)
 
@@ -12,14 +12,16 @@ export function useScrollReveal(threshold = 0.15) {
       ([entry]) => {
         if (entry.isIntersecting) {
           setIsVisible(true)
-          observer.unobserve(el)
+          if (once) observer.unobserve(el)
+        } else if (!once) {
+          setIsVisible(false)
         }
       },
       { threshold }
     )
     observer.observe(el)
     return () => observer.disconnect()
-  }, [threshold])
+  }, [threshold, once])
 
   return [ref, isVisible]
 }

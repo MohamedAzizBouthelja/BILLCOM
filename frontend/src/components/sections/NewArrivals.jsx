@@ -2,18 +2,20 @@
 import { ArrowRight } from "lucide-react"
 import { useProductStore } from "../../lib/store.js"
 import ProductCard from "../ecommerce/ProductCard.jsx"
+import { useScrollReveal } from "../../hooks/useScrollReveal.js"
 
 export default function NewArrivals() {
   const getNewArrivals = useProductStore((s) => s.getNewArrivals)
   const products = getNewArrivals()
+  const [ref, isVisible] = useScrollReveal(0.15)
 
   return (
     <section style={{ padding: "72px 0", background: "var(--gz-surface)" }}>
-      <div className="gz-container">
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: "40px", gap: "16px", flexWrap: "wrap" }}>
+      <div className="gz-container" ref={ref}>
+        <div className={`reveal-up${isVisible ? " is-visible" : ""}`} style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: "40px", gap: "16px", flexWrap: "wrap" }}>
           <div>
             <div className="section-label">Just Landed</div>
-            <h2 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontSize: "2rem", fontWeight: "800", color: "var(--gz-text)" }}>
+            <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "2rem", fontWeight: "800", color: "var(--gz-text)" }}>
               New Arrivals
             </h2>
           </div>
@@ -22,7 +24,11 @@ export default function NewArrivals() {
           </Link>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px,1fr))", gap: "20px" }}>
-          {products.map((p) => <ProductCard key={p.id} product={p} />)}
+          {products.map((p, i) => (
+            <div key={p.id} className={`reveal-up${isVisible ? " is-visible" : ""}`} style={{ transitionDelay: `${isVisible ? i * 60 : 0}ms` }}>
+              <ProductCard product={p} />
+            </div>
+          ))}
         </div>
       </div>
     </section>

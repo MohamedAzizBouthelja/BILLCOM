@@ -14,7 +14,7 @@ export default function CartPage() {
           <div style={{ width: "80px", height: "80px", borderRadius: "20px", background: "var(--gz-surface)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
             <ShoppingBag size={36} color="#9090a8" />
           </div>
-          <h2 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "800", fontSize: "1.5rem", color: "var(--gz-text)", marginBottom: "10px" }}>Your cart is empty</h2>
+          <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "1.5rem", color: "var(--gz-text)", marginBottom: "10px" }}>Your cart is empty</h2>
           <p style={{ color: "var(--gz-text2)", marginBottom: "24px" }}>Start adding some awesome gadgets to your cart!</p>
           <Link to="/shop" className="btn-primary">Start Shopping</Link>
         </div>
@@ -38,7 +38,7 @@ export default function CartPage() {
           <span style={{ color: "var(--gz-text)" }}>Shopping Cart</span>
         </div>
 
-        <h1 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "800", fontSize: "1.8rem", color: "var(--gz-text)", marginBottom: "28px" }}>
+        <h1 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "1.8rem", color: "var(--gz-text)", marginBottom: "28px" }}>
           Shopping Cart <span style={{ color: "var(--gz-text2)", fontSize: "1rem", fontWeight: "500" }}>({cartCount} items)</span>
         </h1>
 
@@ -112,7 +112,7 @@ export default function CartPage() {
 
           {/* Order Summary */}
           <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "14px", padding: "24px", position: "sticky", top: "96px" }}>
-            <h3 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "700", fontSize: "1.1rem", color: "var(--gz-text)", marginBottom: "20px" }}>Order Summary</h3>
+            <h3 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", fontSize: "1.1rem", color: "var(--gz-text)", marginBottom: "20px" }}>Order Summary</h3>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "20px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.9rem" }}>
@@ -129,8 +129,8 @@ export default function CartPage() {
                 </div>
               )}
               <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "12px", display: "flex", justifyContent: "space-between" }}>
-                <span style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "700", color: "var(--gz-text)", fontSize: "1rem" }}>Total</span>
-                <span style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "800", color: "#f59e0b", fontSize: "1.2rem" }}>{formatPrice(tot)}</span>
+                <span style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", color: "var(--gz-text)", fontSize: "1rem" }}>Total</span>
+                <span style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", color: "#f59e0b", fontSize: "1.2rem" }}>{formatPrice(tot)}</span>
               </div>
             </div>
 

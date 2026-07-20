@@ -95,7 +95,7 @@ export default function Hero() {
             {/* Animated heading — word by word */}
             <h1
               style={{
-                fontFamily: "IBM Plex Sans, sans-serif",
+                fontFamily: "Bricolage Grotesque, sans-serif",
                 fontSize: "clamp(2.4rem, 6vw, 4rem)",
                 fontWeight: "800",
                 lineHeight: "1.1",
@@ -191,7 +191,7 @@ export default function Hero() {
                 { target: 4.9,  suffix: "★",  decimals: 1, label: "Average Rating" },
               ].map((s) => (
                 <div key={s.label}>
-                  <div style={{ fontFamily: "IBM Plex Sans, sans-serif", fontSize: "1.5rem", fontWeight: "800", color: "#f59e0b" }}>
+                  <div style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "1.5rem", fontWeight: "800", color: "#f59e0b" }}>
                     <CountUp target={s.target} suffix={s.suffix} decimals={s.decimals} />
                   </div>
                   <div style={{ fontSize: "0.8rem", color: "var(--gz-text2)", fontWeight: "500" }}>{s.label}</div>

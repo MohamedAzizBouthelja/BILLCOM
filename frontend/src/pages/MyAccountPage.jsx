@@ -66,11 +66,11 @@ export default function MyAccountPage() {
           {/* Sidebar */}
           <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "14px", overflow: "hidden", position: "sticky", top: "88px" }}>
             <div style={{ padding: "24px", background: "linear-gradient(135deg, #1e1e2a, #16161f)", borderBottom: "1px solid var(--gz-border2)" }}>
-              <div style={{ width: "52px", height: "52px", borderRadius: "50%", background: "#f59e0b", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "800", fontSize: "1.1rem", color: "#0a0a0f", margin: "0 auto 12px" }}>
+              <div style={{ width: "52px", height: "52px", borderRadius: "50%", background: "#f59e0b", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "1.1rem", color: "#0a0a0f", margin: "0 auto 12px" }}>
                 {initials(user && user.username)}
               </div>
               <div style={{ textAlign: "center" }}>
-                <div style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "700", color: "var(--gz-text)", marginBottom: "4px" }}>{user && user.username}</div>
+                <div style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", color: "var(--gz-text)", marginBottom: "4px" }}>{user && user.username}</div>
                 <div style={{ fontSize: "0.78rem", color: "var(--gz-text2)" }}>{user && user.email}</div>
               </div>
             </div>
@@ -94,7 +94,7 @@ export default function MyAccountPage() {
             {/* Dashboard */}
             {tab === "dashboard" && (
               <div>
-                <h2 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "800", fontSize: "1.5rem", color: "var(--gz-text)", marginBottom: "24px" }}>
+                <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "1.5rem", color: "var(--gz-text)", marginBottom: "24px" }}>
                   Welcome back, {user && user.username ? user.username.split(" ")[0] : "there"}! 👋
                 </h2>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px", marginBottom: "28px" }}>
@@ -104,14 +104,14 @@ export default function MyAccountPage() {
                     { label: "Total Spent",  value: formatPrice(totalSpent) },
                   ].map((s) => (
                     <div key={s.label} style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "12px", padding: "20px" }}>
-                      <div style={{ fontFamily: "IBM Plex Sans, sans-serif", fontSize: "1.6rem", fontWeight: "800", color: "#f59e0b", marginBottom: "4px" }}>{s.value}</div>
+                      <div style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "1.6rem", fontWeight: "800", color: "#f59e0b", marginBottom: "4px" }}>{s.value}</div>
                       <div style={{ fontSize: "0.8rem", color: "var(--gz-text2)", fontWeight: "500" }}>{s.label}</div>
                     </div>
                   ))}
                 </div>
                 <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "14px", overflow: "hidden" }}>
                   <div style={{ padding: "18px 20px", borderBottom: "1px solid var(--gz-border2)" }}>
-                    <h3 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "700", fontSize: "1rem", color: "var(--gz-text)" }}>Recent Orders</h3>
+                    <h3 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", fontSize: "1rem", color: "var(--gz-text)" }}>Recent Orders</h3>
                   </div>
                   {orders.length === 0 ? (
                     <div style={{ padding: "40px", textAlign: "center", color: "var(--gz-text2)" }}>No orders yet. <Link to="/shop" style={{ color: "#f59e0b" }}>Start shopping!</Link></div>
@@ -144,7 +144,7 @@ export default function MyAccountPage() {
             {/* Orders */}
             {tab === "orders" && (
               <div>
-                <h2 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "800", fontSize: "1.5rem", color: "var(--gz-text)", marginBottom: "24px" }}>My Orders</h2>
+                <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "1.5rem", color: "var(--gz-text)", marginBottom: "24px" }}>My Orders</h2>
                 <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "14px", overflow: "hidden" }}>
                   {orders.length === 0 ? (
                     <div style={{ padding: "48px", textAlign: "center", color: "var(--gz-text2)" }}>
@@ -182,7 +182,7 @@ export default function MyAccountPage() {
             {/* Profile */}
             {tab === "profile" && (
               <div>
-                <h2 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "800", fontSize: "1.5rem", color: "var(--gz-text)", marginBottom: "24px" }}>Profile Settings</h2>
+                <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "1.5rem", color: "var(--gz-text)", marginBottom: "24px" }}>Profile Settings</h2>
                 {msg && <div style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: "10px", padding: "12px 16px", marginBottom: "16px", color: "#4ade80", fontSize: "0.875rem" }}>{msg}</div>}
                 <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "14px", padding: "28px" }}>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "14px" }}>
@@ -222,7 +222,7 @@ export default function MyAccountPage() {
             {/* Password */}
             {tab === "password" && (
               <div>
-                <h2 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "800", fontSize: "1.5rem", color: "var(--gz-text)", marginBottom: "24px" }}>Change Password</h2>
+                <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "1.5rem", color: "var(--gz-text)", marginBottom: "24px" }}>Change Password</h2>
                 <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "14px", padding: "28px", maxWidth: "440px" }}>
                   <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                     {[

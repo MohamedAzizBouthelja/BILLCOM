@@ -28,7 +28,7 @@ export default function AdminPage() {
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "28px" }}>
           <div>
-            <h1 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "800", fontSize: "1.8rem", color: "var(--gz-text)" }}>Admin Dashboard</h1>
+            <h1 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "1.8rem", color: "var(--gz-text)" }}>Admin Dashboard</h1>
             <p style={{ color: "var(--gz-text2)", fontSize: "0.875rem" }}>Welcome, {user && user.username}</p>
           </div>
           <Link to="/" className="btn-outline" style={{ gap: "8px", padding: "10px 18px" }}>
@@ -64,14 +64,14 @@ export default function AdminPage() {
                         <span style={{ fontSize: "0.78rem", color: "var(--gz-text2)", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</span>
                         <Icon size={18} color={color} />
                       </div>
-                      <div style={{ fontFamily: "IBM Plex Sans, sans-serif", fontSize: "1.6rem", fontWeight: "800", color }}>{value}</div>
+                      <div style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "1.6rem", fontWeight: "800", color }}>{value}</div>
                     </div>
                   ))}
                 </div>
 
                 <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "14px", overflow: "hidden" }}>
                   <div style={{ padding: "18px 20px", borderBottom: "1px solid var(--gz-border2)" }}>
-                    <h3 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "700", fontSize: "1rem", color: "var(--gz-text)" }}>Recent Orders</h3>
+                    <h3 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", fontSize: "1rem", color: "var(--gz-text)" }}>Recent Orders</h3>
                   </div>
                   {orders.length === 0 ? (
                     <div style={{ padding: "40px", textAlign: "center", color: "var(--gz-text2)" }}>No orders yet.</div>
@@ -103,7 +103,7 @@ export default function AdminPage() {
 
             {tab === "products" && (
               <div>
-                <h2 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "800", fontSize: "1.4rem", color: "var(--gz-text)", marginBottom: "20px" }}>Products ({SAMPLE_PRODUCTS.length})</h2>
+                <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "1.4rem", color: "var(--gz-text)", marginBottom: "20px" }}>Products ({SAMPLE_PRODUCTS.length})</h2>
                 <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "14px", overflow: "hidden" }}>
                   <div style={{ overflowX: "auto" }}>
                     <table className="gz-table">
@@ -130,7 +130,7 @@ export default function AdminPage() {
 
             {tab === "orders" && (
               <div>
-                <h2 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "800", fontSize: "1.4rem", color: "var(--gz-text)", marginBottom: "20px" }}>All Orders</h2>
+                <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "1.4rem", color: "var(--gz-text)", marginBottom: "20px" }}>All Orders</h2>
                 <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "14px", overflow: "hidden" }}>
                   {orders.length === 0 ? (
                     <div style={{ padding: "48px", textAlign: "center", color: "var(--gz-text2)" }}>No orders placed yet.</div>
@@ -161,7 +161,7 @@ export default function AdminPage() {
 
             {tab === "users" && (
               <div>
-                <h2 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "800", fontSize: "1.4rem", color: "var(--gz-text)", marginBottom: "20px" }}>Users</h2>
+                <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "1.4rem", color: "var(--gz-text)", marginBottom: "20px" }}>Users</h2>
                 <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "14px", padding: "48px", textAlign: "center" }}>
                   <Users size={40} style={{ margin: "0 auto 12px", color: "#f59e0b" }} />
                   <p style={{ color: "var(--gz-text2)" }}>User management connects to the user microservice.</p>

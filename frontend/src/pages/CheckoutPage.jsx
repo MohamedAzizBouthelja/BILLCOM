@@ -131,8 +131,8 @@ export default function CheckoutPage() {
               {/* Section 1 */}
               <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "14px", padding: "28px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "24px" }}>
-                  <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "#f59e0b", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "800", fontSize: "0.9rem", color: "#0a0a0f", flexShrink: 0 }}>1</div>
-                  <h2 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "700", fontSize: "1.1rem", color: "var(--gz-text)" }}>Contact Information</h2>
+                  <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "#f59e0b", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "0.9rem", color: "#0a0a0f", flexShrink: 0 }}>1</div>
+                  <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", fontSize: "1.1rem", color: "var(--gz-text)" }}>Contact Information</h2>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
                   <div>
@@ -157,8 +157,8 @@ export default function CheckoutPage() {
               {/* Section 2 */}
               <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "14px", padding: "28px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "24px" }}>
-                  <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "#f59e0b", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "800", fontSize: "0.9rem", color: "#0a0a0f", flexShrink: 0 }}>2</div>
-                  <h2 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "700", fontSize: "1.1rem", color: "var(--gz-text)" }}>Shipping Address</h2>
+                  <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "#f59e0b", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "0.9rem", color: "#0a0a0f", flexShrink: 0 }}>2</div>
+                  <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", fontSize: "1.1rem", color: "var(--gz-text)" }}>Shipping Address</h2>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                   <div>
@@ -185,8 +185,8 @@ export default function CheckoutPage() {
               {/* Section 3 */}
               <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "14px", padding: "28px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "24px" }}>
-                  <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "#f59e0b", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "800", fontSize: "0.9rem", color: "#0a0a0f", flexShrink: 0 }}>3</div>
-                  <h2 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "700", fontSize: "1.1rem", color: "var(--gz-text)" }}>Payment Method</h2>
+                  <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "#f59e0b", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "0.9rem", color: "#0a0a0f", flexShrink: 0 }}>3</div>
+                  <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", fontSize: "1.1rem", color: "var(--gz-text)" }}>Payment Method</h2>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                   {PAYMENT_METHODS.map((m) => (
@@ -204,8 +204,8 @@ export default function CheckoutPage() {
             {/* Order review sidebar */}
             <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "14px", padding: "24px", position: "sticky", top: "96px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "20px" }}>
-                <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "#22c55e", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "800", fontSize: "0.9rem", color: "#fff", flexShrink: 0 }}>✓</div>
-                <h2 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "700", fontSize: "1.1rem", color: "var(--gz-text)" }}>Order Review</h2>
+                <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "#22c55e", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "0.9rem", color: "#fff", flexShrink: 0 }}>✓</div>
+                <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", fontSize: "1.1rem", color: "var(--gz-text)" }}>Order Review</h2>
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "16px" }}>
@@ -231,8 +231,8 @@ export default function CheckoutPage() {
                   <span style={{ color: ship === 0 ? "#22c55e" : "#f0f0f5", fontWeight: "600" }}>{ship === 0 ? "Free" : formatPrice(ship)}</span>
                 </div>
                 <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "10px", display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "700", color: "var(--gz-text)" }}>Total</span>
-                  <span style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "800", color: "#f59e0b", fontSize: "1.15rem" }}>{formatPrice(tot)}</span>
+                  <span style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", color: "var(--gz-text)" }}>Total</span>
+                  <span style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", color: "#f59e0b", fontSize: "1.15rem" }}>{formatPrice(tot)}</span>
                 </div>
               </div>
 

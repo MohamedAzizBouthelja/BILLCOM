@@ -4,6 +4,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 import Header from './Header.jsx'
 import Footer from './Footer.jsx'
 import ChatBot from '../ChatBot.jsx'
+import CustomCursor from '../CustomCursor.jsx'
+import ScrollProgress from '../ScrollProgress.jsx'
 import { useProductStore } from '../../lib/store.js'
 
 const pageVariants = {
@@ -22,6 +24,7 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--gz-bg)', color: 'var(--gz-text)', transition: 'background 0.3s ease, color 0.3s ease' }}>
+      <ScrollProgress />
       <Header />
       <main>
         <AnimatePresence mode="wait">
@@ -38,6 +41,7 @@ export default function Layout() {
       </main>
       <Footer />
       <ChatBot />
+      <CustomCursor />
     </div>
   )
 }

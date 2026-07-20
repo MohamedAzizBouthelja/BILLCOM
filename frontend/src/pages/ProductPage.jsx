@@ -136,7 +136,7 @@ export default function ProductPage() {
     return (
       <div style={{ paddingTop: "100px", textAlign: "center", padding: "120px 24px" }}>
         <div style={{ fontSize: "3rem", marginBottom: "16px" }}>😕</div>
-        <h2 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "700", color: "var(--gz-text)", marginBottom: "8px" }}>Product Not Found</h2>
+        <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", color: "var(--gz-text)", marginBottom: "8px" }}>Product Not Found</h2>
         <Link to="/shop" className="btn-primary" style={{ marginTop: "16px", display: "inline-flex" }}>Back to Shop</Link>
       </div>
     )
@@ -190,7 +190,7 @@ export default function ProductPage() {
           <div>
             {product.badge && <span style={getBadge(product.badge)}>{product.badge}</span>}
             <div style={{ fontSize: "0.8rem", color: "#f59e0b", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.1em", marginTop: "12px", marginBottom: "8px" }}>{product.category_name}</div>
-            <h1 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontSize: "1.8rem", fontWeight: "800", color: "var(--gz-text)", marginBottom: "16px", lineHeight: "1.2" }}>{product.name}</h1>
+            <h1 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "1.8rem", fontWeight: "800", color: "var(--gz-text)", marginBottom: "16px", lineHeight: "1.2" }}>{product.name}</h1>
 
             {/* Rating */}
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
@@ -201,7 +201,7 @@ export default function ProductPage() {
 
             {/* Price */}
             <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "24px" }}>
-              <span style={{ fontFamily: "IBM Plex Sans, sans-serif", fontSize: "2.2rem", fontWeight: "800", color: "#f59e0b" }}>{formatPrice(product.price)}</span>
+              <span style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "2.2rem", fontWeight: "800", color: "#f59e0b" }}>{formatPrice(product.price)}</span>
               {product.old_price && (
                 <div>
                   <span style={{ fontSize: "1.1rem", color: "var(--gz-text2)", textDecoration: "line-through" }}>{formatPrice(product.old_price)}</span>
@@ -255,7 +255,7 @@ export default function ProductPage() {
         {/* ── Reviews Section ─────────────────────────────────────────────────── */}
         <div style={{ marginBottom: "64px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "32px" }}>
-            <h2 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontSize: "1.5rem", fontWeight: "800", color: "var(--gz-text)" }}>
+            <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "1.5rem", fontWeight: "800", color: "var(--gz-text)" }}>
               Avis clients
             </h2>
             <span style={{ background: "rgba(245,158,11,0.12)", color: "#f59e0b", fontSize: "0.8rem", fontWeight: "700", padding: "4px 12px", borderRadius: "999px" }}>
@@ -288,7 +288,7 @@ export default function ProductPage() {
 
             {/* Right: add review form */}
             <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "16px", padding: "24px" }}>
-              <h3 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontSize: "1.05rem", fontWeight: "700", color: "var(--gz-text)", marginBottom: "20px" }}>
+              <h3 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "1.05rem", fontWeight: "700", color: "var(--gz-text)", marginBottom: "20px" }}>
                 Laisser un avis
               </h3>
 
@@ -348,7 +348,7 @@ export default function ProductPage() {
         {/* Related products */}
         {related.length > 0 && (
           <div>
-            <h2 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontSize: "1.5rem", fontWeight: "800", color: "var(--gz-text)", marginBottom: "24px" }}>Produits similaires</h2>
+            <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "1.5rem", fontWeight: "800", color: "var(--gz-text)", marginBottom: "24px" }}>Produits similaires</h2>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px,1fr))", gap: "20px" }}>
               {related.map((p) => <ProductCard key={p.id} product={p} />)}
             </div>

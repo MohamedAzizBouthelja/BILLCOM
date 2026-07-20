@@ -11,6 +11,7 @@ import LoginPage from './pages/LoginPage.jsx'
 import RegisterPage from './pages/RegisterPage.jsx'
 import AdminPage from './pages/AdminPage.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
+import NotFoundPage from './pages/NotFoundPage.jsx'
 import { useAuthStore } from './lib/store.js'
 
 function RequireAdmin({ children }) {
@@ -35,6 +36,7 @@ export default function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/admin" element={<RequireAdmin><AdminPage /></RequireAdmin>} />
         <Route path="/dashboard" element={<RequireAdmin><DashboardPage /></RequireAdmin>} />
+        <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
   )

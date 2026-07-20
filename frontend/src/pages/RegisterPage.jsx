@@ -31,10 +31,10 @@ export default function RegisterPage() {
       <div style={{ width: "100%", maxWidth: "480px" }}>
         <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "20px", padding: "40px" }}>
           <div style={{ textAlign: "center", marginBottom: "28px" }}>
-            <div style={{ fontSize: "1.5rem", fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "800", marginBottom: "6px" }}>
+            <div style={{ fontSize: "1.5rem", fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", marginBottom: "6px" }}>
               <span style={{ color: "#f59e0b" }}>Gadget</span><span style={{ color: "var(--gz-text)" }}>Zone</span>
             </div>
-            <h1 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "800", fontSize: "1.4rem", color: "var(--gz-text)", marginBottom: "6px" }}>Create Account 🚀</h1>
+            <h1 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "1.4rem", color: "var(--gz-text)", marginBottom: "6px" }}>Create Account 🚀</h1>
             <p style={{ fontSize: "0.875rem", color: "var(--gz-text2)" }}>Join GadgetZone and start shopping</p>
           </div>
 

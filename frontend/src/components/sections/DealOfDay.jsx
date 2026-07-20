@@ -2,6 +2,8 @@
 import { Link } from "react-router-dom"
 import { ShoppingCart, Star, Truck } from "lucide-react"
 import { useProductStore, useCartStore, formatPrice } from "../../lib/store.js"
+import { useScrollReveal } from "../../hooks/useScrollReveal.js"
+import { flyToCart } from "../../lib/flyToCart.js"
 
 function pad(n) { return String(n).padStart(2, "0") }
 
@@ -17,6 +19,7 @@ export default function DealOfDay() {
   const product = getDeal()
 
   const [time, setTime] = useState({ h: 0, m: 0, s: 0 })
+  const [ref, isVisible] = useScrollReveal(0.15)
 
   useEffect(() => {
     const end = getEndOfDay()
@@ -36,18 +39,18 @@ export default function DealOfDay() {
 
   return (
     <section style={{ padding: "72px 0", background: "var(--gz-surface)", borderTop: "1px solid rgba(255,255,255,0.05)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-      <div className="gz-container">
-        <div style={{ textAlign: "center", marginBottom: "48px" }}>
+      <div className="gz-container" ref={ref}>
+        <div className={`reveal-up${isVisible ? " is-visible" : ""}`} style={{ textAlign: "center", marginBottom: "48px" }}>
           <div className="section-label">Limited Time</div>
-          <h2 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontSize: "2rem", fontWeight: "800", color: "var(--gz-text)" }}>Deal of the Day</h2>
+          <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "clamp(2rem, 4vw, 2.6rem)", fontWeight: "800", color: "var(--gz-text)" }}>Deal of the Day</h2>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: "48px", alignItems: "center" }}>
 
           {/* Left — info */}
-          <div>
+          <div className={`reveal-left${isVisible ? " is-visible" : ""}`} style={{ transitionDelay: `${isVisible ? 80 : 0}ms` }}>
             <div style={{ fontSize: "0.8rem", color: "#f59e0b", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "8px" }}>{product.category_name}</div>
-            <h3 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontSize: "1.6rem", fontWeight: "800", color: "var(--gz-text)", marginBottom: "12px" }}>{product.name}</h3>
+            <h3 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "1.6rem", fontWeight: "800", color: "var(--gz-text)", marginBottom: "12px" }}>{product.name}</h3>
             <p style={{ color: "var(--gz-text2)", fontSize: "0.9rem", lineHeight: "1.7", marginBottom: "20px" }}>{product.description}</p>
 
             {/* Countdown */}
@@ -68,14 +71,14 @@ export default function DealOfDay() {
 
             {/* Price */}
             <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
-              <span style={{ fontFamily: "IBM Plex Sans, sans-serif", fontSize: "2rem", fontWeight: "800", color: "#f59e0b" }}>{formatPrice(product.price)}</span>
+              <span style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "2rem", fontWeight: "800", color: "#f59e0b" }}>{formatPrice(product.price)}</span>
               {product.old_price && (
                 <span style={{ fontSize: "1.1rem", color: "var(--gz-text2)", textDecoration: "line-through" }}>{formatPrice(product.old_price)}</span>
               )}
             </div>
 
             <div style={{ display: "flex", gap: "12px" }}>
-              <button onClick={() => addItem(product)} className="btn-primary">
+              <button onClick={(e) => { addItem(product); flyToCart(e.currentTarget) }} className="btn-primary">
                 <ShoppingCart size={16} /> Add to Cart
               </button>
               <Link to="/shop" className="btn-outline">View Shop</Link>
@@ -83,18 +86,24 @@ export default function DealOfDay() {
           </div>
 
           {/* Center — image */}
-          <div style={{ textAlign: "center" }}>
-            <img
-              src={product.image_url}
-              alt={product.name}
-              loading="lazy"
-              decoding="async"
-              style={{ width: "280px", height: "280px", objectFit: "cover", borderRadius: "20px", border: "1px solid var(--gz-border)" }}
-            />
+          <div className={`reveal-scale${isVisible ? " is-visible" : ""}`} style={{ textAlign: "center", transitionDelay: `${isVisible ? 160 : 0}ms` }}>
+            <div style={{ position: "relative", width: "280px", height: "280px", borderRadius: "20px", overflow: "hidden", border: "1px solid var(--gz-border)", display: "inline-block" }}>
+              <img
+                src={product.image_url}
+                alt={product.name}
+                loading="lazy"
+                decoding="async"
+                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+              />
+              <div style={{
+                position: "absolute", inset: 0, pointerEvents: "none",
+                background: "linear-gradient(155deg, rgba(245,158,11,0.12) 0%, transparent 40%), radial-gradient(130% 100% at 50% 100%, rgba(0,0,0,0.38) 0%, transparent 55%)",
+              }} />
+            </div>
           </div>
 
           {/* Right — meta */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <div className={`reveal-right${isVisible ? " is-visible" : ""}`} style={{ display: "flex", flexDirection: "column", gap: "16px", transitionDelay: `${isVisible ? 240 : 0}ms` }}>
             <div style={{ background: "var(--gz-bg)", border: "1px solid var(--gz-border)", borderRadius: "12px", padding: "16px 20px", display: "flex", alignItems: "center", gap: "14px" }}>
               <Star size={20} color="#f59e0b" fill="#f59e0b" />
               <div>

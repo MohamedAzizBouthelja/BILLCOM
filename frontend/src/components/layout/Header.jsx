@@ -1,8 +1,10 @@
 ﻿import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
+import { motion, AnimatePresence } from "framer-motion"
 import { ShoppingCart, Search, User, Menu, X, LogOut, LayoutDashboard, Shield, Sun, Moon } from "lucide-react"
 import { useAuthStore, useCartStore } from "../../lib/store.js"
 import { useTheme } from "../../lib/ThemeContext.jsx"
+import LogoMark from "../Logo.jsx"
 
 const NAV = [
   { label: "Home",        path: "/" },
@@ -58,13 +60,9 @@ export default function Header() {
 
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 shrink-0" style={{ textDecoration: "none" }}>
-            <img
-              src={theme === 'dark' ? '/logo-dark.png' : '/logo-light.png'}
-              alt="Billcom Consulting"
-              style={{ height: "52px", width: "auto", objectFit: "contain" }}
-            />
-            <div style={{ display: "flex", flexDirection: "column", borderLeft: "2px solid rgba(245,158,11,0.35)", paddingLeft: "12px" }}>
-              <span style={{ fontFamily: "IBM Plex Sans, sans-serif", fontSize: "1.35rem", fontWeight: "800", color: "#f59e0b", lineHeight: "1.15", letterSpacing: "-0.01em" }}>
+            <LogoMark size={40} />
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <span style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "1.35rem", fontWeight: "800", color: "#f59e0b", lineHeight: "1.15", letterSpacing: "-0.01em" }}>
                 Gadget<span style={{ color: "var(--gz-text)" }}>Zone</span>
               </span>
               <span style={{ fontSize: "0.6rem", color: "var(--gz-text2)", letterSpacing: "0.18em", textTransform: "uppercase", fontWeight: "600" }}>
@@ -94,11 +92,22 @@ export default function Header() {
             <button
               onClick={toggle}
               title={theme === 'dark' ? 'Mode clair' : 'Mode sombre'}
-              style={{ padding: "9px", borderRadius: "9px", color: "var(--gz-text2)", background: "transparent", border: "none", cursor: "pointer" }}
+              style={{ padding: "9px", borderRadius: "9px", color: "var(--gz-text2)", background: "transparent", border: "none", cursor: "pointer", overflow: "hidden", display: "flex" }}
               onMouseEnter={(e) => { e.currentTarget.style.color = "#f59e0b"; e.currentTarget.style.background = "rgba(245,158,11,0.08)" }}
               onMouseLeave={(e) => { e.currentTarget.style.color = "var(--gz-text2)"; e.currentTarget.style.background = "transparent" }}
             >
-              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.span
+                  key={theme}
+                  initial={{ rotate: -90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: 90, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  style={{ display: "flex" }}
+                >
+                  {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                </motion.span>
+              </AnimatePresence>
             </button>
 
             {/* Search */}
@@ -113,6 +122,7 @@ export default function Header() {
 
             {/* Cart */}
             <Link
+              id="gz-cart-icon"
               to="/cart"
               style={{ position: "relative", padding: "9px", borderRadius: "9px", color: "var(--gz-text2)", display: "flex", alignItems: "center", textDecoration: "none" }}
               onMouseEnter={(e) => { e.currentTarget.style.color = "#f59e0b"; e.currentTarget.style.background = "rgba(245,158,11,0.08)" }}

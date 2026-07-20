@@ -190,7 +190,7 @@ export default function ChatBot() {
           }}>
             <img src="/icons/assistant-bot.gif" alt="bot" style={{ width: "32px", height: "32px", objectFit: "contain" }} />
             <div style={{ flex: 1 }}>
-              <div style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "700", fontSize: "0.9rem", color: "#f0f0f5" }}>Assistant Billcom</div>
+              <div style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", fontSize: "0.9rem", color: "#f0f0f5" }}>Assistant Billcom</div>
               <div style={{ fontSize: "0.7rem", color: "#4ade80", display: "flex", alignItems: "center", gap: "4px" }}>
                 <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#4ade80", display: "inline-block" }} />
                 En ligne
@@ -220,7 +220,7 @@ export default function ChatBot() {
                       color: m.role === "user" ? "#0a0a0f" : "#e0e0f0",
                       fontSize: "0.85rem",
                       lineHeight: "1.5",
-                      fontFamily: "IBM Plex Sans, sans-serif",
+                      fontFamily: "Bricolage Grotesque, sans-serif",
                       whiteSpace: "pre-wrap",
                       wordBreak: "break-word",
                     }}>
@@ -262,7 +262,7 @@ export default function ChatBot() {
                         color: "#f59e0b",
                         fontSize: "0.72rem",
                         cursor: "pointer",
-                        fontFamily: "IBM Plex Sans, sans-serif",
+                        fontFamily: "Bricolage Grotesque, sans-serif",
                         transition: "background 0.15s",
                       }}
                     >
@@ -294,7 +294,7 @@ export default function ChatBot() {
                     padding: "10px 14px",
                     color: "#f0f0f5",
                     fontSize: "0.85rem",
-                    fontFamily: "IBM Plex Sans, sans-serif",
+                    fontFamily: "Bricolage Grotesque, sans-serif",
                     outline: "none",
                   }}
                 />

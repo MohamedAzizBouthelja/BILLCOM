@@ -1,4 +1,5 @@
 ﻿import { Link } from "react-router-dom"
+import LogoMark from "../Logo.jsx"
 
 const LINKS = {
   Shop:    [{ label: "Smartphones", path: "/shop?cat=smartphones" }, { label: "Laptops", path: "/shop?cat=laptops" }, { label: "Audio", path: "/shop?cat=audio" }, { label: "Cameras", path: "/shop?cat=cameras" }, { label: "Wearables", path: "/shop?cat=wearables" }, { label: "Accessories", path: "/shop?cat=accessories" }],
@@ -14,8 +15,9 @@ export default function Footer() {
 
           {/* Brand */}
           <div>
-            <Link to="/" style={{ display: "inline-block", marginBottom: "16px", textDecoration: "none" }}>
-              <span style={{ fontFamily: "IBM Plex Sans, sans-serif", fontSize: "1.25rem", fontWeight: "800", color: "#f59e0b" }}>
+            <Link to="/" style={{ display: "inline-flex", alignItems: "center", gap: "10px", marginBottom: "16px", textDecoration: "none" }}>
+              <LogoMark size={32} />
+              <span style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "1.25rem", fontWeight: "800", color: "#f59e0b" }}>
                 Gadget<span style={{ color: "var(--gz-text)" }}>Zone</span>
               </span>
             </Link>

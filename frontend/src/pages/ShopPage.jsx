@@ -3,6 +3,7 @@ import { useSearchParams, Link } from "react-router-dom"
 import { Search, SlidersHorizontal, X } from "lucide-react"
 import { useProductStore, CATEGORIES, formatPrice } from "../lib/store.js"
 import ProductCard from "../components/ecommerce/ProductCard.jsx"
+import { useScrollReveal } from "../hooks/useScrollReveal.js"
 
 const PER_PAGE = 9
 
@@ -11,6 +12,7 @@ export default function ShopPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [priceMax, setPriceMax] = useState(300000)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [gridRef, gridVisible] = useScrollReveal(0.1)
 
   const q       = searchParams.get("q") || ""
   const cat     = searchParams.get("cat") || "all"
@@ -78,7 +80,7 @@ export default function ShopPage() {
             top: "88px",
           }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
-              <h3 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "700", fontSize: "1rem", color: "var(--gz-text)" }}>Filters</h3>
+              <h3 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", fontSize: "1rem", color: "var(--gz-text)" }}>Filters</h3>
               <button onClick={clearAll} style={{ fontSize: "0.75rem", color: "var(--gz-text2)", background: "none", border: "none", cursor: "pointer" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "#9090a8"}>Clear All</button>
             </div>
 
@@ -131,9 +133,9 @@ export default function ShopPage() {
           </aside>
 
           {/* Main */}
-          <div>
+          <div ref={gridRef}>
             {/* Header */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px", gap: "12px", flexWrap: "wrap" }}>
+            <div className={`reveal-up${gridVisible ? " is-visible" : ""}`} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px", gap: "12px", flexWrap: "wrap" }}>
               <p style={{ fontSize: "0.875rem", color: "var(--gz-text2)" }}>
                 Showing <strong style={{ color: "var(--gz-text)" }}>{Math.min((page - 1) * PER_PAGE + 1, filtered.length)}–{Math.min(page * PER_PAGE, filtered.length)}</strong> of <strong style={{ color: "#f59e0b" }}>{filtered.length}</strong> results
                 {cat && cat !== "all" && <> in <span style={{ color: "#f59e0b", textTransform: "capitalize" }}>{cat}</span></>}
@@ -155,13 +157,17 @@ export default function ShopPage() {
             {paged.length === 0 ? (
               <div style={{ textAlign: "center", padding: "80px 24px" }}>
                 <div style={{ fontSize: "3rem", marginBottom: "16px" }}>🔍</div>
-                <h3 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontWeight: "700", fontSize: "1.2rem", color: "var(--gz-text)", marginBottom: "8px" }}>No products found</h3>
+                <h3 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", fontSize: "1.2rem", color: "var(--gz-text)", marginBottom: "8px" }}>No products found</h3>
                 <p style={{ color: "var(--gz-text2)", marginBottom: "20px" }}>Try adjusting your filters or search term.</p>
                 <button onClick={clearAll} className="btn-primary">Clear Filters</button>
               </div>
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px,1fr))", gap: "20px" }}>
-                {paged.map((p) => <ProductCard key={p.id} product={p} />)}
+                {paged.map((p, i) => (
+                  <div key={p.id} className={`reveal-up${gridVisible ? " is-visible" : ""}`} style={{ transitionDelay: `${gridVisible ? i * 60 : 0}ms` }}>
+                    <ProductCard product={p} />
+                  </div>
+                ))}
               </div>
             )}
 

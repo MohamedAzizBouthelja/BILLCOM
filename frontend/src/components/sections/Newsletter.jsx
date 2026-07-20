@@ -1,8 +1,12 @@
-﻿export default function Newsletter() {
+﻿import { useScrollReveal } from "../../hooks/useScrollReveal.js"
+
+export default function Newsletter() {
+  const [ref, isVisible] = useScrollReveal(0.15)
+
   return (
     <section className="newsletter-section" style={{ padding: "72px 0" }}>
-      <div className="gz-container" style={{ textAlign: "center", maxWidth: "768px" }}>
-        <h2 style={{ fontFamily: "IBM Plex Sans, sans-serif", fontSize: "2rem", fontWeight: "800", color: "#0a0a0f", marginBottom: "12px" }}>
+      <div ref={ref} className={`gz-container reveal-up${isVisible ? " is-visible" : ""}`} style={{ textAlign: "center", maxWidth: "768px" }}>
+        <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "2rem", fontWeight: "800", color: "#0a0a0f", marginBottom: "12px" }}>
           Get Exclusive Deals First 🎉
         </h2>
         <p style={{ color: "rgba(10,10,15,0.7)", fontSize: "1rem", marginBottom: "32px" }}>
