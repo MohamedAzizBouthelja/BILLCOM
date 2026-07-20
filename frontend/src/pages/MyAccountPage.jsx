@@ -1,7 +1,9 @@
 ﻿import { useState, useEffect } from "react"
 import { useNavigate, useSearchParams, Link } from "react-router-dom"
-import { LayoutDashboard, ShoppingBag, User, Lock, LogOut } from "lucide-react"
-import { useAuthStore, useOrderStore, formatPrice } from "../lib/store.js"
+import { LayoutDashboard, ShoppingBag, User, Lock, LogOut, Heart } from "lucide-react"
+import { useAuthStore, useOrderStore, useProductStore, formatPrice } from "../lib/store.js"
+import { useWishlistStore } from "../lib/wishlistStore.js"
+import ProductCard from "../components/ecommerce/ProductCard.jsx"
 
 const STATUS_CLASSES = {
   pending:    "status-pending",
@@ -16,12 +18,29 @@ function initials(name) {
   return name.split(" ").map((n) => n[0] || "").join("").slice(0, 2).toUpperCase()
 }
 
+function SkeletonRows({ count = 3, cols = 5 }) {
+  return (
+    <div style={{ padding: "8px 20px" }}>
+      {Array.from({ length: count }).map((_, r) => (
+        <div key={r} style={{ display: "flex", gap: "16px", alignItems: "center", padding: "14px 0", borderBottom: r < count - 1 ? "1px solid var(--gz-border2)" : "none" }}>
+          {Array.from({ length: cols }).map((_, c) => (
+            <div key={c} className="skeleton" style={{ height: "14px", flex: c === 0 ? "0 0 90px" : 1 }} />
+          ))}
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function MyAccountPage() {
   const navigate = useNavigate()
   const [sp] = useSearchParams()
   const [tab, setTab] = useState(sp.get("tab") || "dashboard")
   const { user, logout, isLoggedIn } = useAuthStore()
-  const { orders, fetchOrders } = useOrderStore()
+  const { orders, loading: ordersLoading, fetchOrders } = useOrderStore()
+  const { products } = useProductStore()
+  const wishlistIds = useWishlistStore((s) => s.ids)
+  const wishlistProducts = products.filter((p) => wishlistIds.includes(p.id))
 
   const [profile, setProfile] = useState({ first_name: "", last_name: "", phone: "", address: "", city: "" })
   const [pwForm, setPwForm]   = useState({ current: "", next: "", confirm: "" })
@@ -45,6 +64,7 @@ export default function MyAccountPage() {
   const TABS = [
     { id: "dashboard", label: "Dashboard",       icon: LayoutDashboard },
     { id: "orders",    label: "My Orders",        icon: ShoppingBag },
+    { id: "wishlist",  label: "Wishlist",          icon: Heart },
     { id: "profile",   label: "Profile",          icon: User },
     { id: "password",  label: "Change Password",  icon: Lock },
   ]
@@ -113,7 +133,9 @@ export default function MyAccountPage() {
                   <div style={{ padding: "18px 20px", borderBottom: "1px solid var(--gz-border2)" }}>
                     <h3 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", fontSize: "1rem", color: "var(--gz-text)" }}>Recent Orders</h3>
                   </div>
-                  {orders.length === 0 ? (
+                  {ordersLoading && orders.length === 0 ? (
+                    <SkeletonRows count={3} cols={5} />
+                  ) : orders.length === 0 ? (
                     <div style={{ padding: "40px", textAlign: "center", color: "var(--gz-text2)" }}>No orders yet. <Link to="/shop" style={{ color: "#f59e0b" }}>Start shopping!</Link></div>
                   ) : (
                     <div style={{ overflowX: "auto" }}>
@@ -146,7 +168,9 @@ export default function MyAccountPage() {
               <div>
                 <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "1.5rem", color: "var(--gz-text)", marginBottom: "24px" }}>My Orders</h2>
                 <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "14px", overflow: "hidden" }}>
-                  {orders.length === 0 ? (
+                  {ordersLoading && orders.length === 0 ? (
+                    <SkeletonRows count={4} cols={6} />
+                  ) : orders.length === 0 ? (
                     <div style={{ padding: "48px", textAlign: "center", color: "var(--gz-text2)" }}>
                       <ShoppingBag size={40} style={{ margin: "0 auto 12px", color: "#f59e0b" }} />
                       <p>No orders yet.</p>
@@ -176,6 +200,24 @@ export default function MyAccountPage() {
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* Wishlist */}
+            {tab === "wishlist" && (
+              <div>
+                <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "1.5rem", color: "var(--gz-text)", marginBottom: "24px" }}>My Wishlist</h2>
+                {wishlistProducts.length === 0 ? (
+                  <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "14px", padding: "48px", textAlign: "center", color: "var(--gz-text2)" }}>
+                    <Heart size={40} style={{ margin: "0 auto 12px", color: "#f59e0b" }} />
+                    <p>No saved items yet.</p>
+                    <Link to="/shop" className="btn-primary" style={{ marginTop: "16px", display: "inline-flex" }}>Browse Products</Link>
+                  </div>
+                ) : (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px,1fr))", gap: "18px" }}>
+                    {wishlistProducts.map((p) => <ProductCard key={p.id} product={p} />)}
+                  </div>
+                )}
               </div>
             )}
 

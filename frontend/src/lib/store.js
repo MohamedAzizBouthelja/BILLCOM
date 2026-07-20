@@ -21,7 +21,16 @@ export const SAMPLE_PRODUCTS = [
   { id:13, category:"wearables",   category_name:"Wearables",   name:"Samsung Galaxy Watch 6",   slug:"samsung-galaxy-watch-6",   description:"Advanced health tracking, sapphire glass, BioActive sensor, Wear OS.",       price:29999,  old_price:34999,  image_url:"https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80", badge:"SALE", stock:55, featured:false, rating:4.7, reviews:234 },
   { id:14, category:"accessories", category_name:"Accessories", name:"Anker 140W GaN Charger",   slug:"anker-140w-gan-charger",   description:"Three ports, PowerIQ 4.0, charges MacBook + iPhone + iPad simultaneously.", price:4999,   old_price:6499,   image_url:"https://images.unsplash.com/photo-1625772452859-1c03d5bf1137?w=600&q=80", badge:"NEW",  stock:200,featured:false, rating:4.8, reviews:445 },
   { id:15, category:"accessories", category_name:"Accessories", name:"Samsung 45W USB-C Cable",  slug:"samsung-45w-usb-c-cable",  description:"Premium braided 2m cable with 45W fast charging and 10Gbps data.",          price:999,    old_price:null,   image_url:"https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600&q=80", badge:"",     stock:500,featured:false, rating:4.5, reviews:189 },
-]
+].map((p) => ({
+  ...p,
+  // No secondary product photography available yet — these are alternate crops of the
+  // same source photo (wide shot / tight square / top-focused), not real extra angles.
+  images: [
+    p.image_url,
+    p.image_url.split("?")[0] + "?w=600&h=600&fit=crop&crop=entropy&q=80",
+    p.image_url.split("?")[0] + "?w=600&h=600&fit=crop&crop=top&q=80",
+  ],
+}))
 
 export const CATEGORIES = [
   { slug:"smartphones", name:"Smartphones", image:"/icons/smartphone.gif"   },

@@ -1,14 +1,15 @@
 ﻿import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
+import { Banknote, Smartphone, Wallet, CreditCard, Lock } from "lucide-react"
 import { useCartStore, useAuthStore, useOrderStore, formatPrice } from "../lib/store.js"
 
 const ORDER_SERVICE = ""
 
 const PAYMENT_METHODS = [
-  { id: "cod",    label: "Cash on Delivery",   icon: "💵" },
-  { id: "bkash",  label: "bKash",               icon: "📱" },
-  { id: "nagad",  label: "Nagad",               icon: "📲" },
-  { id: "card",   label: "Credit / Debit Card (Stripe)", icon: "💳" },
+  { id: "cod",    label: "Cash on Delivery",   icon: Banknote },
+  { id: "bkash",  label: "bKash",               icon: Smartphone },
+  { id: "nagad",  label: "Nagad",               icon: Wallet },
+  { id: "card",   label: "Credit / Debit Card (Stripe)", icon: CreditCard },
 ]
 
 export default function CheckoutPage() {
@@ -192,7 +193,7 @@ export default function CheckoutPage() {
                   {PAYMENT_METHODS.map((m) => (
                     <label key={m.id} className={"pay-option" + (form.payment === m.id ? " selected" : "")} style={{ cursor: "pointer" }}>
                       <input type="radio" name="payment" value={m.id} checked={form.payment === m.id} onChange={() => set("payment", m.id)} style={{ display: "none" }} />
-                      <span style={{ fontSize: "1.2rem" }}>{m.icon}</span>
+                      <m.icon size={18} color={form.payment === m.id ? "#f59e0b" : "#9090a8"} />
                       <span style={{ fontWeight: "600", color: form.payment === m.id ? "#f59e0b" : "#f0f0f5", fontSize: "0.9rem" }}>{m.label}</span>
                       {form.payment === m.id && <span style={{ marginLeft: "auto", color: "#f59e0b" }}>✓</span>}
                     </label>
@@ -239,7 +240,9 @@ export default function CheckoutPage() {
               <button type="submit" disabled={loading} className="btn-primary" style={{ width: "100%", justifyContent: "center", padding: "14px", fontSize: "0.95rem", marginBottom: "12px", opacity: loading ? 0.7 : 1 }}>
                 {loading ? "Placing Order..." : "Place Order — " + formatPrice(tot)}
               </button>
-              <div style={{ textAlign: "center", fontSize: "0.75rem", color: "var(--gz-text2)" }}>🔒 Your information is secure &amp; encrypted</div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", fontSize: "0.75rem", color: "var(--gz-text2)" }}>
+                <Lock size={12} color="#f59e0b" /> Your information is secure &amp; encrypted
+              </div>
             </div>
           </div>
         </form>

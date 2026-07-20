@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { useSearchParams, Link } from "react-router-dom"
 import { CheckCircle, Package, Home, Loader } from "lucide-react"
 import { useAuthStore } from "../lib/store.js"
+import OrderTimeline from "../components/OrderTimeline.jsx"
 
 const ORDER_SERVICE = ""
 
@@ -76,18 +77,8 @@ export default function OrderSuccessPage() {
         </div>
 
         {paid && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", marginBottom: "32px" }}>
-            {[
-              { icon: Package, label: "En traitement", sub: "1-2 heures" },
-              { icon: Package, label: "Expédié",       sub: "1-2 jours" },
-              { icon: Package, label: "Livré",         sub: "2-3 jours" },
-            ].map(({ icon: Icon, label, sub }) => (
-              <div key={label} style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "10px", padding: "14px 10px", textAlign: "center" }}>
-                <Icon size={20} color="#f59e0b" style={{ margin: "0 auto 8px" }} />
-                <div style={{ fontSize: "0.8rem", fontWeight: "700", color: "var(--gz-text)", marginBottom: "2px" }}>{label}</div>
-                <div style={{ fontSize: "0.7rem", color: "var(--gz-text2)" }}>{sub}</div>
-              </div>
-            ))}
+          <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "14px", padding: "24px 16px", marginBottom: "32px" }}>
+            <OrderTimeline status="processing" />
           </div>
         )}
 

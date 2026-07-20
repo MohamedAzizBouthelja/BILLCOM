@@ -6,6 +6,8 @@ import Footer from './Footer.jsx'
 import ChatBot from '../ChatBot.jsx'
 import CustomCursor from '../CustomCursor.jsx'
 import ScrollProgress from '../ScrollProgress.jsx'
+import CartToast from '../CartToast.jsx'
+import QuickViewModal from '../QuickViewModal.jsx'
 import { useProductStore } from '../../lib/store.js'
 
 const pageVariants = {
@@ -42,6 +44,8 @@ export default function Layout() {
       <Footer />
       <ChatBot />
       <CustomCursor />
+      <CartToast />
+      <QuickViewModal />
     </div>
   )
 }

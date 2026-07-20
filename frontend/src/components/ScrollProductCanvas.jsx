@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react'
 import { useScroll, useTransform, motion, AnimatePresence } from 'framer-motion'
 import { useCartStore } from '../lib/store'
+import { useCartToastStore } from '../lib/toastStore'
 import useFrameLoader from '../hooks/useFrameLoader'
 import { usePerformance } from '../hooks/usePerformance'
 
@@ -46,6 +47,7 @@ export default function ScrollProductCanvas() {
   const containerRef = useRef(null)
   const canvasRef    = useRef(null)
   const { addItem }  = useCartStore()
+  const showToast    = useCartToastStore((s) => s.show)
 
   const iphone  = useFrameLoader('iphone',  PRODUCTS.iphone.totalFrames,  PRODUCTS.iphone.ext)
   const airpods = useFrameLoader('airpods', PRODUCTS.airpods.totalFrames, PRODUCTS.airpods.ext)
@@ -171,7 +173,7 @@ export default function ScrollProductCanvas() {
               <h2 className="text-gz-accent text-5xl font-bold tracking-tight">iPhone 15 Pro Max</h2>
               <p className="text-white/60 text-lg mt-2">Free delivery. 2-year warranty. In stock today.</p>
               <button
-                onClick={() => addItem(PRODUCTS.iphone)}
+                onClick={() => { addItem(PRODUCTS.iphone); showToast(PRODUCTS.iphone) }}
                 className="bg-gz-accent text-black font-bold px-8 py-3 rounded-full mt-6 hover:bg-amber-400 transition-colors"
               >
                 Add to Cart
@@ -209,7 +211,7 @@ export default function ScrollProductCanvas() {
               <h2 className="text-gz-accent text-5xl font-bold tracking-tight">AirPods Pro 2</h2>
               <p className="text-gray-600 text-lg mt-2">Free delivery. 2-year warranty. In stock today.</p>
               <button
-                onClick={() => addItem(PRODUCTS.airpods)}
+                onClick={() => { addItem(PRODUCTS.airpods); showToast(PRODUCTS.airpods) }}
                 className="bg-gz-accent text-black font-bold px-8 py-3 rounded-full mt-6 hover:bg-amber-400 transition-colors"
               >
                 Add to Cart

@@ -15,9 +15,7 @@ export default function NewArrivals() {
         <div className={`reveal-up${isVisible ? " is-visible" : ""}`} style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: "40px", gap: "16px", flexWrap: "wrap" }}>
           <div>
             <div className="section-label">Just Landed</div>
-            <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "2rem", fontWeight: "800", color: "var(--gz-text)" }}>
-              New Arrivals
-            </h2>
+            <h2 className="section-title">New Arrivals</h2>
           </div>
           <Link to="/shop?badge=NEW" style={{ display: "flex", alignItems: "center", gap: "6px", color: "#f59e0b", fontSize: "0.9rem", fontWeight: "600", textDecoration: "none" }}>
             See All New <ArrowRight size={16} />

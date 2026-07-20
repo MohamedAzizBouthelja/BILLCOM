@@ -1,10 +1,12 @@
 ﻿import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
-import { ShoppingCart, Search, User, Menu, X, LogOut, LayoutDashboard, Shield, Sun, Moon } from "lucide-react"
-import { useAuthStore, useCartStore } from "../../lib/store.js"
+import { ShoppingCart, Search, User, Menu, X, LogOut, LayoutDashboard, Shield, Sun, Moon, ChevronDown } from "lucide-react"
+import { useAuthStore, useCartStore, useProductStore, CATEGORIES, formatPrice } from "../../lib/store.js"
+import { CATEGORY_ICONS } from "../../lib/categoryIcons.js"
 import { useTheme } from "../../lib/ThemeContext.jsx"
 import LogoMark, { LogoWordmark } from "../Logo.jsx"
+import AnnouncementBar from "./AnnouncementBar.jsx"
 
 const NAV = [
   { label: "Home",        path: "/" },
@@ -18,11 +20,20 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [query,      setQuery]      = useState("")
+  const [megaOpen,   setMegaOpen]   = useState(false)
   const navigate  = useNavigate()
   const { user, logout, isLoggedIn } = useAuthStore()
   const { count } = useCartStore()
   const cartCount = count()
   const { theme, toggle } = useTheme()
+  const { products } = useProductStore()
+
+  const suggestions = query.trim().length > 1
+    ? products.filter((p) =>
+        p.name.toLowerCase().includes(query.trim().toLowerCase()) ||
+        p.category_name.toLowerCase().includes(query.trim().toLowerCase())
+      ).slice(0, 5)
+    : []
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40)
@@ -55,6 +66,7 @@ export default function Header() {
       }}
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
     >
+      <AnnouncementBar collapsed={scrolled} />
       <div className="gz-container">
         <div className="flex items-center justify-between" style={{ height: "72px" }}>
 
@@ -66,7 +78,7 @@ export default function Header() {
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-2">
-            {NAV.map((item) => (
+            {NAV.map((item) => item.label !== "Shop" ? (
               <Link
                 key={item.label}
                 to={item.path}
@@ -75,6 +87,53 @@ export default function Header() {
               >
                 {item.label}
               </Link>
+            ) : (
+              <div
+                key={item.label}
+                style={{ position: "relative" }}
+                onMouseEnter={() => setMegaOpen(true)}
+                onMouseLeave={() => setMegaOpen(false)}
+              >
+                <Link
+                  to={item.path}
+                  className="gz-nav-link-strong"
+                  style={{ fontSize: "1rem", fontWeight: "600", padding: "9px 16px", borderRadius: "9px", textDecoration: "none", display: "flex", alignItems: "center", gap: "4px" }}
+                >
+                  {item.label}
+                  <ChevronDown size={14} style={{ transform: megaOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
+                </Link>
+                <AnimatePresence>
+                  {megaOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+                      style={{
+                        position: "absolute", top: "calc(100% + 10px)", left: "50%", transform: "translateX(-50%)",
+                        width: "460px", background: "var(--gz-surface)", border: "1px solid var(--gz-border)",
+                        borderRadius: "16px", padding: "14px", boxShadow: "0 20px 50px rgba(0,0,0,0.4)",
+                        display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "4px",
+                      }}
+                    >
+                      {CATEGORIES.map((cat) => {
+                        const Icon = CATEGORY_ICONS[cat.slug] || ShoppingCart
+                        return (
+                          <Link
+                            key={cat.slug}
+                            to={"/shop?cat=" + cat.slug}
+                            className="gz-nav-link"
+                            style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px", borderRadius: "10px", textDecoration: "none" }}
+                          >
+                            <Icon size={18} color="#f59e0b" />
+                            <span style={{ fontSize: "0.85rem", fontWeight: "600" }}>{cat.name}</span>
+                          </Link>
+                        )
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             ))}
           </nav>
 
@@ -199,16 +258,36 @@ export default function Header() {
       {/* Search bar */}
       {searchOpen && (
         <div style={{ borderTop: "1px solid var(--gz-border2)", background: "rgba(10,10,15,0.98)", padding: "12px 24px" }}>
-          <form onSubmit={handleSearch} style={{ maxWidth: "600px", margin: "0 auto", display: "flex", gap: "10px" }}>
-            <input
-              autoFocus
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search gadgets, smartphones, laptops..."
-              className="gz-input"
-              style={{ flex: 1 }}
-            />
-            <button type="submit" className="btn-primary" style={{ padding: "10px 20px" }}>Search</button>
+          <form onSubmit={handleSearch} style={{ maxWidth: "600px", margin: "0 auto" }}>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <input
+                autoFocus
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search gadgets, smartphones, laptops..."
+                className="gz-input"
+                style={{ flex: 1 }}
+              />
+              <button type="submit" className="btn-primary" style={{ padding: "10px 20px" }}>Search</button>
+            </div>
+
+            {suggestions.length > 0 && (
+              <div style={{ marginTop: "10px", background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "12px", overflow: "hidden" }}>
+                {suggestions.map((p) => (
+                  <Link
+                    key={p.id}
+                    to={"/product/" + p.slug}
+                    onClick={() => { setSearchOpen(false); setQuery("") }}
+                    className="gz-nav-link"
+                    style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", textDecoration: "none", borderBottom: "1px solid var(--gz-border2)" }}
+                  >
+                    <img src={p.image_url} alt={p.name} style={{ width: "36px", height: "36px", objectFit: "cover", borderRadius: "6px", flexShrink: 0 }} />
+                    <span style={{ flex: 1, fontSize: "0.85rem", fontWeight: "600", color: "var(--gz-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name}</span>
+                    <span style={{ fontSize: "0.8rem", fontWeight: "700", color: "#f59e0b", flexShrink: 0 }}>{formatPrice(p.price)}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
           </form>
         </div>
       )}

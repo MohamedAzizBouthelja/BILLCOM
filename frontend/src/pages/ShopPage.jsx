@@ -1,11 +1,46 @@
 ﻿import { useState, useMemo } from "react"
 import { useSearchParams, Link } from "react-router-dom"
-import { Search, SlidersHorizontal, X } from "lucide-react"
+import { Search, SlidersHorizontal, X, Flame } from "lucide-react"
 import { useProductStore, CATEGORIES, formatPrice } from "../lib/store.js"
 import ProductCard from "../components/ecommerce/ProductCard.jsx"
 import { useScrollReveal } from "../hooks/useScrollReveal.js"
 
 const PER_PAGE = 9
+
+function SaleBanner({ products }) {
+  const maxDiscount = Math.max(
+    ...products.map((p) => (p.old_price ? Math.round((1 - p.price / p.old_price) * 100) : 0))
+  )
+  return (
+    <div style={{
+      position: "relative", overflow: "hidden",
+      background: "var(--gz-surface)", border: "1px solid rgba(245,158,11,0.25)",
+      borderRadius: "16px", padding: "20px 24px", marginBottom: "24px",
+      display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap",
+    }}>
+      <div style={{ position: "absolute", inset: 0, background: "radial-gradient(420px circle at 0% 50%, rgba(245,158,11,0.16), transparent 70%)", pointerEvents: "none" }} />
+      <div style={{ position: "relative", display: "flex", alignItems: "center", gap: "12px", flex: "1 1 220px" }}>
+        <div style={{ width: "44px", height: "44px", borderRadius: "50%", background: "rgba(245,158,11,0.14)", border: "1px solid rgba(245,158,11,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <Flame size={20} color="#f59e0b" />
+        </div>
+        <div>
+          <div className="section-label" style={{ marginBottom: "4px" }}>Limited Time</div>
+          <div style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "1.1rem", color: "var(--gz-text)" }}>
+            Sale is on — up to {maxDiscount}% off
+          </div>
+        </div>
+      </div>
+      <div style={{ position: "relative", display: "flex", gap: "8px" }}>
+        {products.map((p) => (
+          <Link key={p.id} to={"/product/" + p.slug} style={{ width: "48px", height: "48px", borderRadius: "10px", overflow: "hidden", border: "1px solid var(--gz-border)", flexShrink: 0, display: "block" }}>
+            <img src={p.image_url} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          </Link>
+        ))}
+      </div>
+      <Link to="/shop?badge=SALE" className="btn-primary" style={{ position: "relative", flexShrink: 0 }}>Shop the Sale</Link>
+    </div>
+  )
+}
 
 export default function ShopPage() {
   const { products } = useProductStore()
@@ -17,6 +52,7 @@ export default function ShopPage() {
   const q       = searchParams.get("q") || ""
   const cat     = searchParams.get("cat") || "all"
   const badge   = searchParams.get("badge") || ""
+  const minRating = Number(searchParams.get("minRating") || 0)
   const sort    = searchParams.get("sort") || "newest"
   const page    = Number(searchParams.get("page") || 1)
 
@@ -42,6 +78,7 @@ export default function ShopPage() {
       if (badge && p.badge !== badge) return false
       if (q && !p.name.toLowerCase().includes(q.toLowerCase()) && !p.description.toLowerCase().includes(q.toLowerCase())) return false
       if (p.price > priceMax) return false
+      if (minRating && p.rating < minRating) return false
       return true
     })
     if (sort === "price_asc")  list = [...list].sort((a, b) => a.price - b.price)
@@ -49,12 +86,13 @@ export default function ShopPage() {
     if (sort === "rating")     list = [...list].sort((a, b) => b.rating - a.rating)
     if (sort === "newest")     list = [...list].reverse()
     return list
-  }, [cat, badge, q, priceMax, sort])
+  }, [cat, badge, q, priceMax, minRating, sort])
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE)
   const paged = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
 
   const catCount = (slug) => products.filter((p) => p.category === slug).length
+  const saleProducts = products.filter((p) => p.badge === "SALE").slice(0, 4)
 
   return (
     <div style={{ paddingTop: "80px", minHeight: "100vh" }}>
@@ -121,7 +159,7 @@ export default function ShopPage() {
             </div>
 
             {/* Badge */}
-            <div>
+            <div style={{ marginBottom: "24px" }}>
               <div style={{ fontSize: "0.75rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--gz-text2)", marginBottom: "12px" }}>Badge</div>
               {[{ v: "", l: "All" }, { v: "NEW", l: "New" }, { v: "HOT", l: "Hot" }, { v: "SALE", l: "Sale" }].map((b) => (
                 <label key={b.v} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px", cursor: "pointer" }}>
@@ -130,10 +168,25 @@ export default function ShopPage() {
                 </label>
               ))}
             </div>
+
+            {/* Rating */}
+            <div>
+              <div style={{ fontSize: "0.75rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--gz-text2)", marginBottom: "12px" }}>Rating</div>
+              {[{ v: 0, l: "All Ratings" }, { v: 4, l: "4★ & above" }, { v: 3, l: "3★ & above" }].map((r) => (
+                <label key={r.v} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px", cursor: "pointer" }}>
+                  <input type="radio" name="minRating" className="filter-radio" checked={minRating === r.v} onChange={() => setParam("minRating", r.v ? String(r.v) : "")} style={{ accentColor: "#f59e0b" }} />
+                  <span style={{ fontSize: "0.875rem", color: minRating === r.v ? "#f59e0b" : "#9090a8" }}>{r.l}</span>
+                </label>
+              ))}
+            </div>
           </aside>
 
           {/* Main */}
           <div ref={gridRef}>
+            {badge !== "SALE" && page === 1 && saleProducts.length > 0 && (
+              <SaleBanner products={saleProducts} />
+            )}
+
             {/* Header */}
             <div className={`reveal-up${gridVisible ? " is-visible" : ""}`} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px", gap: "12px", flexWrap: "wrap" }}>
               <p style={{ fontSize: "0.875rem", color: "var(--gz-text2)" }}>

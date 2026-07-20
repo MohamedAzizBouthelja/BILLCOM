@@ -1,6 +1,13 @@
 ﻿import { Link, useNavigate } from "react-router-dom"
-import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from "lucide-react"
+import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, CreditCard, Smartphone, Wallet, Banknote, Lock } from "lucide-react"
 import { useCartStore, formatPrice } from "../lib/store.js"
+
+const PAYMENT_ICONS = [
+  { icon: CreditCard, label: "Card" },
+  { icon: Smartphone, label: "bKash" },
+  { icon: Wallet, label: "Nagad" },
+  { icon: Banknote, label: "COD" },
+]
 
 export default function CartPage() {
   const { items, updateQty, removeItem, count, subtotal, shipping, total } = useCartStore()
@@ -139,10 +146,16 @@ export default function CartPage() {
             </button>
 
             {/* Payment icons */}
-            <div style={{ textAlign: "center", fontSize: "0.75rem", color: "var(--gz-text2)", marginBottom: "10px" }}>
-              💳 Visa &nbsp;|&nbsp; Mastercard &nbsp;|&nbsp; bKash &nbsp;|&nbsp; Nagad &nbsp;|&nbsp; COD
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "14px", marginBottom: "12px" }}>
+              {PAYMENT_ICONS.map(({ icon: Icon, label }) => (
+                <span key={label} title={label} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "34px", height: "26px", borderRadius: "6px", background: "var(--gz-bg)", border: "1px solid var(--gz-border)" }}>
+                  <Icon size={14} color="var(--gz-text2)" />
+                </span>
+              ))}
             </div>
-            <div style={{ textAlign: "center", fontSize: "0.75rem", color: "var(--gz-text2)" }}>🔒 Secure Checkout Guaranteed</div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", fontSize: "0.75rem", color: "var(--gz-text2)" }}>
+              <Lock size={12} color="#f59e0b" /> Secure Checkout Guaranteed
+            </div>
           </div>
         </div>
       </div>

@@ -2,6 +2,7 @@
 import { Link } from "react-router-dom"
 import { ShoppingCart, Star, Truck } from "lucide-react"
 import { useProductStore, useCartStore, formatPrice } from "../../lib/store.js"
+import { useCartToastStore } from "../../lib/toastStore.js"
 import { useScrollReveal } from "../../hooks/useScrollReveal.js"
 import { flyToCart } from "../../lib/flyToCart.js"
 
@@ -16,6 +17,7 @@ function getEndOfDay() {
 export default function DealOfDay() {
   const getDeal = useProductStore((s) => s.getDeal)
   const { addItem } = useCartStore()
+  const showToast = useCartToastStore((s) => s.show)
   const product = getDeal()
 
   const [time, setTime] = useState({ h: 0, m: 0, s: 0 })
@@ -74,12 +76,15 @@ export default function DealOfDay() {
             <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
               <span style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "2rem", fontWeight: "800", color: "#f59e0b" }}>{formatPrice(product.price)}</span>
               {product.old_price && (
-                <span style={{ fontSize: "1.1rem", color: "var(--gz-text2)", textDecoration: "line-through" }}>{formatPrice(product.old_price)}</span>
+                <>
+                  <span style={{ fontSize: "1.1rem", color: "var(--gz-text2)", textDecoration: "line-through" }}>{formatPrice(product.old_price)}</span>
+                  <span className="discount-pct">-{Math.round((1 - product.price / product.old_price) * 100)}%</span>
+                </>
               )}
             </div>
 
             <div style={{ display: "flex", gap: "12px" }}>
-              <button onClick={(e) => { addItem(product); flyToCart(e.currentTarget) }} className="btn-primary">
+              <button onClick={(e) => { addItem(product); flyToCart(e.currentTarget); showToast(product) }} className="btn-primary">
                 <ShoppingCart size={16} /> Add to Cart
               </button>
               <Link to="/shop" className="btn-outline">View Shop</Link>

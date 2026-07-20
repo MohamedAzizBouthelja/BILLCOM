@@ -1,16 +1,8 @@
 ﻿import { Link } from "react-router-dom"
-import { Smartphone, Laptop, Headphones, Camera, Watch, Cable } from "lucide-react"
+import { Smartphone } from "lucide-react"
 import { CATEGORIES, SAMPLE_PRODUCTS } from "../../lib/store.js"
+import { CATEGORY_ICONS } from "../../lib/categoryIcons.js"
 import { useScrollReveal } from "../../hooks/useScrollReveal.js"
-
-const CATEGORY_ICONS = {
-  smartphones: Smartphone,
-  laptops: Laptop,
-  audio: Headphones,
-  cameras: Camera,
-  wearables: Watch,
-  accessories: Cable,
-}
 
 export default function CategoryGrid() {
   const countFor = (slug) => SAMPLE_PRODUCTS.filter((p) => p.category === slug).length

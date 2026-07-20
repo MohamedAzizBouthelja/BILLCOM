@@ -1,7 +1,10 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useParams, Link } from "react-router-dom"
+import { AnimatePresence, motion } from "framer-motion"
 import { ShoppingCart, Star, Truck, Shield, RefreshCcw, Plus, Minus, Send, Trash2 } from "lucide-react"
 import { useProductStore, useCartStore, useAuthStore, formatPrice } from "../lib/store.js"
+import { useCartToastStore } from "../lib/toastStore.js"
+import { useRecentlyViewedStore } from "../lib/recentlyViewedStore.js"
 import ProductCard from "../components/ecommerce/ProductCard.jsx"
 
 const PRODUCT_SERVICE = ""
@@ -22,6 +25,21 @@ function StarPicker({ value, onChange }) {
           ★
         </button>
       ))}
+    </div>
+  )
+}
+
+function ReviewSkeleton() {
+  return (
+    <div style={{ padding: "18px 0", borderBottom: "1px solid var(--gz-border2)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+        <div className="skeleton" style={{ width: "34px", height: "34px", borderRadius: "50%", flexShrink: 0 }} />
+        <div style={{ flex: 1 }}>
+          <div className="skeleton" style={{ height: "12px", width: "40%", marginBottom: "6px" }} />
+          <div className="skeleton" style={{ height: "10px", width: "25%" }} />
+        </div>
+      </div>
+      <div className="skeleton" style={{ height: "12px", width: "90%" }} />
     </div>
   )
 }
@@ -60,10 +78,33 @@ export default function ProductPage() {
   const { slug } = useParams()
   const { products } = useProductStore()
   const { addItem } = useCartStore()
+  const showToast = useCartToastStore((s) => s.show)
   const { token, user, isLoggedIn } = useAuthStore()
+  const recentIds = useRecentlyViewedStore((s) => s.ids)
+  const trackRecentlyViewed = useRecentlyViewedStore((s) => s.track)
   const product = products.find((p) => p.slug === slug)
   const [qty, setQty] = useState(1)
   const [added, setAdded] = useState(false)
+  const [zoomStyle, setZoomStyle] = useState({ transformOrigin: "center", transform: "scale(1)" })
+  const [selectedImage, setSelectedImage] = useState(0)
+  const [showStickyBar, setShowStickyBar] = useState(false)
+  const ctaRef = useRef(null)
+
+  useEffect(() => {
+    const el = ctaRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(([entry]) => setShowStickyBar(!entry.isIntersecting), { threshold: 0 })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [product])
+
+  const handleImageMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = ((e.clientX - rect.left) / rect.width) * 100
+    const y = ((e.clientY - rect.top) / rect.height) * 100
+    setZoomStyle({ transformOrigin: `${x}% ${y}%`, transform: "scale(1.8)" })
+  }
+  const handleImageMouseLeave = () => setZoomStyle({ transformOrigin: "center", transform: "scale(1)" })
 
   const [reviews, setReviews] = useState([])
   const [reviewsLoading, setReviewsLoading] = useState(false)
@@ -90,6 +131,10 @@ export default function ProductPage() {
 
   useEffect(() => {
     if (product) fetchReviews(product.id)
+  }, [product?.id])
+
+  useEffect(() => {
+    if (product) trackRecentlyViewed(product.id)
   }, [product?.id])
 
   const handleSubmitReview = async (e) => {
@@ -143,9 +188,15 @@ export default function ProductPage() {
   }
 
   const related = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4)
+  const gallery = product.images && product.images.length > 0 ? product.images : [product.image_url]
+  const recentlyViewed = recentIds
+    .map((id) => products.find((p) => p.id === id))
+    .filter((p) => p && p.id !== product.id)
+    .slice(0, 4)
 
   const handleAddToCart = () => {
     addItem(product, qty)
+    showToast(product, qty)
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
   }
@@ -180,9 +231,37 @@ export default function ProductPage() {
 
           {/* Image */}
           <div>
-            <div className="pc-image-wrap" style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "20px", aspectRatio: "1", height: "auto", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <img src={product.image_url} alt={product.name} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <div
+              className="pc-image-wrap"
+              style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "20px", aspectRatio: "1", height: "auto", cursor: "zoom-in" }}
+              onMouseMove={handleImageMouseMove}
+              onMouseLeave={handleImageMouseLeave}
+            >
+              <img
+                src={gallery[selectedImage]}
+                alt={product.name}
+                loading="lazy"
+                decoding="async"
+                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "transform 0.15s ease", ...zoomStyle }}
+              />
             </div>
+            {gallery.length > 1 && (
+              <div style={{ display: "flex", gap: "10px", marginTop: "14px" }}>
+                {gallery.map((src, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setSelectedImage(i)}
+                    style={{
+                      width: "64px", height: "64px", borderRadius: "10px", overflow: "hidden", padding: 0, cursor: "pointer", flexShrink: 0,
+                      border: i === selectedImage ? "2px solid #f59e0b" : "1.5px solid var(--gz-border)",
+                      background: "var(--gz-surface)",
+                    }}
+                  >
+                    <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Info */}
@@ -203,7 +282,10 @@ export default function ProductPage() {
               <span style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "2.2rem", fontWeight: "800", color: "#f59e0b" }}>{formatPrice(product.price)}</span>
               {product.old_price && (
                 <div>
-                  <span style={{ fontSize: "1.1rem", color: "var(--gz-text2)", textDecoration: "line-through" }}>{formatPrice(product.old_price)}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ fontSize: "1.1rem", color: "var(--gz-text2)", textDecoration: "line-through" }}>{formatPrice(product.old_price)}</span>
+                    <span className="discount-pct">-{Math.round((1 - product.price / product.old_price) * 100)}%</span>
+                  </div>
                   <span style={{ display: "block", fontSize: "0.75rem", color: "#22c55e", fontWeight: "700" }}>
                     Save {formatPrice(product.old_price - product.price)}
                   </span>
@@ -214,7 +296,7 @@ export default function ProductPage() {
             <p style={{ color: "var(--gz-text2)", fontSize: "0.95rem", lineHeight: "1.75", marginBottom: "28px" }}>{product.description}</p>
 
             {/* Quantity + add to cart */}
-            <div style={{ display: "flex", gap: "14px", alignItems: "center", marginBottom: "20px", flexWrap: "wrap" }}>
+            <div ref={ctaRef} style={{ display: "flex", gap: "14px", alignItems: "center", marginBottom: "20px", flexWrap: "wrap" }}>
               <div style={{ display: "flex", alignItems: "center", border: "1.5px solid var(--gz-border)", borderRadius: "10px", overflow: "hidden" }}>
                 <button onClick={() => setQty(Math.max(1, qty - 1))} style={{ width: "40px", height: "44px", background: "none", border: "none", color: "var(--gz-text2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "var(--gz-text2)"}>
                   <Minus size={16} />
@@ -267,7 +349,10 @@ export default function ProductPage() {
             {/* Left: list of reviews */}
             <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "16px", padding: "24px" }}>
               {reviewsLoading ? (
-                <div style={{ textAlign: "center", padding: "32px", color: "var(--gz-text2)" }}>Chargement des avis...</div>
+                <>
+                  <ReviewSkeleton />
+                  <ReviewSkeleton />
+                </>
               ) : reviews.length === 0 ? (
                 <div style={{ textAlign: "center", padding: "32px" }}>
                   <div style={{ fontSize: "2rem", marginBottom: "12px" }}>💬</div>
@@ -346,14 +431,52 @@ export default function ProductPage() {
 
         {/* Related products */}
         {related.length > 0 && (
-          <div>
+          <div style={{ marginBottom: recentlyViewed.length > 0 ? "64px" : "0" }}>
             <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "1.5rem", fontWeight: "800", color: "var(--gz-text)", marginBottom: "24px" }}>Produits similaires</h2>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px,1fr))", gap: "20px" }}>
               {related.map((p) => <ProductCard key={p.id} product={p} />)}
             </div>
           </div>
         )}
+
+        {/* Recently viewed */}
+        {recentlyViewed.length > 0 && (
+          <div>
+            <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "1.5rem", fontWeight: "800", color: "var(--gz-text)", marginBottom: "24px" }}>Recently Viewed</h2>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px,1fr))", gap: "20px" }}>
+              {recentlyViewed.map((p) => <ProductCard key={p.id} product={p} />)}
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Sticky Add to Cart bar — shown once the main CTA scrolls out of view */}
+      <AnimatePresence>
+        {showStickyBar && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            style={{
+              position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 900,
+              background: "var(--gz-surface)", borderTop: "1px solid var(--gz-border)",
+              boxShadow: "0 -10px 30px rgba(0,0,0,0.3)", padding: "12px 24px",
+            }}
+          >
+            <div className="gz-container" style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+              <img src={product.image_url} alt={product.name} style={{ width: "44px", height: "44px", objectFit: "cover", borderRadius: "8px", flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: "0.85rem", fontWeight: "700", color: "var(--gz-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{product.name}</div>
+                <div style={{ fontSize: "0.9rem", fontWeight: "800", color: "#f59e0b" }}>{formatPrice(product.price)}</div>
+              </div>
+              <button onClick={handleAddToCart} className="btn-primary" style={{ flexShrink: 0 }}>
+                <ShoppingCart size={16} /> {added ? "Added!" : "Add to Cart"}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
