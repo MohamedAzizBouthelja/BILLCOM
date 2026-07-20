@@ -1,5 +1,6 @@
 ﻿import { Link } from "react-router-dom"
-import LogoMark from "../Logo.jsx"
+import { Mail, Phone, Clock, Lock, Truck, Undo2 } from "lucide-react"
+import LogoMark, { LogoWordmark } from "../Logo.jsx"
 
 const LINKS = {
   Shop:    [{ label: "Smartphones", path: "/shop?cat=smartphones" }, { label: "Laptops", path: "/shop?cat=laptops" }, { label: "Audio", path: "/shop?cat=audio" }, { label: "Cameras", path: "/shop?cat=cameras" }, { label: "Wearables", path: "/shop?cat=wearables" }, { label: "Accessories", path: "/shop?cat=accessories" }],
@@ -17,17 +18,15 @@ export default function Footer() {
           <div>
             <Link to="/" style={{ display: "inline-flex", alignItems: "center", gap: "10px", marginBottom: "16px", textDecoration: "none" }}>
               <LogoMark size={32} />
-              <span style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "1.25rem", fontWeight: "800", color: "#f59e0b" }}>
-                Gadget<span style={{ color: "var(--gz-text)" }}>Zone</span>
-              </span>
+              <LogoWordmark fontSize="1.25rem" tagline={false} />
             </Link>
             <p style={{ fontSize: "0.85rem", color: "var(--gz-text2)", lineHeight: "1.7", maxWidth: "220px", marginBottom: "20px" }}>
               Your one-stop destination for next-level technology. 500+ products, 50K+ happy customers.
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px", fontSize: "0.8rem", color: "var(--gz-text2)" }}>
-              <span>📧 support@gadgetzone.com</span>
-              <span>📞 +1-800-GADGETS</span>
-              <span>🕐 24/7 Customer Support</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "0.8rem", color: "var(--gz-text2)" }}>
+              <span style={{ display: "flex", alignItems: "center", gap: "8px" }}><Mail size={14} color="#f59e0b" /> support@gadgetzone.com</span>
+              <span style={{ display: "flex", alignItems: "center", gap: "8px" }}><Phone size={14} color="#f59e0b" /> +1-800-GADGETS</span>
+              <span style={{ display: "flex", alignItems: "center", gap: "8px" }}><Clock size={14} color="#f59e0b" /> 24/7 Customer Support</span>
             </div>
           </div>
 
@@ -40,12 +39,7 @@ export default function Footer() {
               <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: "10px" }}>
                 {links.map((l) => (
                   <li key={l.label}>
-                    <Link
-                      to={l.path}
-                      style={{ fontSize: "0.875rem", color: "var(--gz-text2)", textDecoration: "none", transition: "color 0.15s" }}
-                      onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"}
-                      onMouseLeave={(e) => e.currentTarget.style.color = "var(--gz-text2)"}
-                    >
+                    <Link to={l.path} className="gz-text-link" style={{ fontSize: "0.875rem" }}>
                       {l.label}
                     </Link>
                   </li>
@@ -70,10 +64,10 @@ export default function Footer() {
         {/* Bottom bar */}
         <div style={{ borderTop: "1px solid var(--gz-border2)", paddingTop: "24px", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
           <p style={{ fontSize: "0.8rem", color: "var(--gz-text2)" }}>© 2026 GadgetZone. All rights reserved.</p>
-          <div style={{ display: "flex", gap: "20px", fontSize: "0.8rem", color: "var(--gz-text2)" }}>
-            <span>🔒 Secure Payments</span>
-            <span>🚚 Free Delivery over ৳5,000</span>
-            <span>↩ 7-Day Returns</span>
+          <div style={{ display: "flex", gap: "20px", fontSize: "0.8rem", color: "var(--gz-text2)", flexWrap: "wrap" }}>
+            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}><Lock size={13} color="#f59e0b" /> Secure Payments</span>
+            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}><Truck size={13} color="#f59e0b" /> Free Delivery over ৳5,000</span>
+            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}><Undo2 size={13} color="#f59e0b" /> 7-Day Returns</span>
           </div>
         </div>
       </div>

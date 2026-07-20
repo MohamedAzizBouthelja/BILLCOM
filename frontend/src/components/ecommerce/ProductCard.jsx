@@ -6,30 +6,20 @@ import { flyToCart } from "../../lib/flyToCart.js"
 export default function ProductCard({ product }) {
   const { addItem } = useCartStore()
 
-  const badgeStyle = {
-    display: "inline-block",
-    padding: "3px 8px",
-    borderRadius: "6px",
-    fontSize: "0.65rem",
-    fontWeight: "700",
-    textTransform: "uppercase",
-    letterSpacing: "0.06em",
-    position: "absolute",
-    top: "10px",
-    left: "10px",
-    zIndex: 2,
-  }
-
-  const getBadgeClass = (b) => {
-    if (b === "NEW")  return { ...badgeStyle, background: "#22c55e", color: "#fff" }
-    if (b === "HOT")  return { ...badgeStyle, background: "#ef4444", color: "#fff", animation: "badge-pulse 1.8s ease-in-out infinite" }
-    if (b === "SALE") return { ...badgeStyle, background: "#f59e0b", color: "#0a0a0f" }
-    return {}
+  const badgeClassFor = (b) => {
+    if (b === "NEW")  return "badge-new"
+    if (b === "HOT")  return "badge-hot"
+    if (b === "SALE") return "badge-sale"
+    return ""
   }
 
   return (
     <div className="gz-card" style={{ position: "relative", overflow: "hidden", display: "flex", flexDirection: "column" }}>
-      {product.badge && <span style={getBadgeClass(product.badge)}>{product.badge}</span>}
+      {product.badge && (
+        <span className={`gz-badge ${badgeClassFor(product.badge)}`} style={{ position: "absolute", top: "10px", left: "10px", zIndex: 2 }}>
+          {product.badge}
+        </span>
+      )}
 
       <Link to={"/product/" + product.slug} style={{ display: "block", textDecoration: "none" }}>
         <div className="pc-image-wrap">

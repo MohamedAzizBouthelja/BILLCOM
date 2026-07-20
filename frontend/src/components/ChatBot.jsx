@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react"
-import { Send, X, Minus } from "lucide-react"
+import { Send, X, Minus, Bot } from "lucide-react"
 import { SAMPLE_PRODUCTS, CATEGORIES } from "../lib/store.js"
 
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY
@@ -154,7 +154,14 @@ export default function ChatBot() {
           }}
           title="Assistant Billcom"
         >
-          <img src="/icons/assistant-bot.gif" alt="chat" style={{ width: "40px", height: "40px", objectFit: "contain" }} />
+          <span style={{
+            width: "40px", height: "40px", borderRadius: "50%",
+            background: "linear-gradient(155deg, rgba(245,158,11,0.22), transparent 70%)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            animation: "bot-breathe 2.4s ease-in-out infinite",
+          }}>
+            <Bot size={26} color="#f59e0b" strokeWidth={1.7} />
+          </span>
         </button>
       )}
 
@@ -188,7 +195,13 @@ export default function ChatBot() {
             borderBottom: minimized ? "none" : "1px solid rgba(245,158,11,0.15)",
             flexShrink: 0,
           }}>
-            <img src="/icons/assistant-bot.gif" alt="bot" style={{ width: "32px", height: "32px", objectFit: "contain" }} />
+            <span style={{
+              width: "32px", height: "32px", borderRadius: "50%", flexShrink: 0,
+              background: "rgba(245,158,11,0.14)", border: "1px solid rgba(245,158,11,0.3)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <Bot size={18} color="#f59e0b" strokeWidth={1.8} />
+            </span>
             <div style={{ flex: 1 }}>
               <div style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", fontSize: "0.9rem", color: "#f0f0f5" }}>Assistant Billcom</div>
               <div style={{ fontSize: "0.7rem", color: "#4ade80", display: "flex", alignItems: "center", gap: "4px" }}>
@@ -327,6 +340,10 @@ export default function ChatBot() {
         @keyframes bounce {
           0%, 80%, 100% { transform: translateY(0); }
           40% { transform: translateY(-6px); }
+        }
+        @keyframes bot-breathe {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.08); }
         }
       `}</style>
     </>

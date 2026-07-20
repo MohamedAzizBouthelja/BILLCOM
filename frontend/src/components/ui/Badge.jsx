@@ -1,12 +1,12 @@
 import { cn } from '../../lib/utils.js'
 
 const variants = {
-  default: 'bg-gray-100 text-gray-700',
-  success: 'bg-green-50 text-green-700',
-  warning: 'bg-amber-50 text-amber-700',
-  danger: 'bg-red-50 text-red-700',
-  accent: 'bg-accent/10 text-accent',
-  secondary: 'bg-secondary/10 text-secondary',
+  default: 'bg-white/10 text-[var(--gz-text2)]',
+  success: 'bg-[rgba(34,197,94,0.15)] text-[#4ade80]',
+  warning: 'bg-[rgba(245,158,11,0.15)] text-[#f59e0b]',
+  danger: 'bg-[rgba(239,68,68,0.15)] text-[#f87171]',
+  accent: 'bg-[rgba(245,158,11,0.15)] text-[#f59e0b]',
+  secondary: 'bg-[rgba(56,189,248,0.15)] text-[#38bdf8]',
 }
 
 export default function Badge({ children, variant = 'default', className }) {

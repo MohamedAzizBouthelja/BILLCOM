@@ -1,49 +1,36 @@
-﻿import { useScrollReveal } from "../../hooks/useScrollReveal.js"
+import { Mail } from "lucide-react"
+import { useScrollReveal } from "../../hooks/useScrollReveal.js"
 
 export default function Newsletter() {
   const [ref, isVisible] = useScrollReveal(0.15)
 
   return (
-    <section className="newsletter-section" style={{ padding: "72px 0" }}>
-      <div ref={ref} className={`gz-container reveal-up${isVisible ? " is-visible" : ""}`} style={{ textAlign: "center", maxWidth: "768px" }}>
-        <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "2rem", fontWeight: "800", color: "#0a0a0f", marginBottom: "12px" }}>
-          Get Exclusive Deals First 🎉
+    <section className="newsletter-section" style={{ padding: "80px 0" }}>
+      <div ref={ref} className={`gz-container reveal-up${isVisible ? " is-visible" : ""}`} style={{ textAlign: "center", maxWidth: "640px", position: "relative" }}>
+        <div style={{
+          width: "52px", height: "52px", borderRadius: "50%", margin: "0 auto 20px",
+          background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.3)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <Mail size={22} color="#f59e0b" strokeWidth={1.7} />
+        </div>
+        <h2 className="section-title" style={{ marginBottom: "12px" }}>
+          Get Exclusive Deals First
         </h2>
-        <p style={{ color: "rgba(10,10,15,0.7)", fontSize: "1rem", marginBottom: "32px" }}>
+        <p style={{ color: "var(--gz-text2)", fontSize: "1rem", lineHeight: "1.7", marginBottom: "32px" }}>
           Subscribe to our newsletter and be the first to know about flash sales, new arrivals, and special offers.
         </p>
         <form
           onSubmit={(e) => e.preventDefault()}
-          style={{ display: "flex", gap: "8px", maxWidth: "480px", margin: "0 auto" }}
+          style={{ display: "flex", gap: "10px", maxWidth: "440px", margin: "0 auto" }}
         >
           <input
             type="email"
             placeholder="Enter your email address"
-            style={{
-              flex: 1,
-              padding: "13px 18px",
-              borderRadius: "999px",
-              border: "none",
-              background: "rgba(10,10,15,0.12)",
-              color: "#0a0a0f",
-              fontSize: "0.9rem",
-              outline: "none",
-            }}
+            className="gz-input"
+            style={{ flex: 1, borderRadius: "999px", padding: "12px 20px" }}
           />
-          <button
-            type="submit"
-            style={{
-              padding: "13px 24px",
-              borderRadius: "999px",
-              background: "var(--gz-bg)",
-              color: "#f59e0b",
-              fontWeight: "700",
-              fontSize: "0.9rem",
-              border: "none",
-              cursor: "pointer",
-              whiteSpace: "nowrap",
-            }}
-          >
+          <button type="submit" className="btn-primary" style={{ borderRadius: "999px", whiteSpace: "nowrap" }}>
             Subscribe
           </button>
         </form>

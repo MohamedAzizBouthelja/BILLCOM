@@ -163,21 +163,33 @@ select:focus-visible,
 
 /* ── Cards ── */
 .gz-card {
-  background: var(--gz-surface);
-  border: 1px solid var(--gz-border);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--gz-surface) 100%, white 3%) 0%, var(--gz-surface) 100%);
+  border: 1px solid var(--gz-border2);
   border-radius: 14px;
-  transition: all 0.25s ease;
+  transition: transform 0.35s cubic-bezier(0.22,1,0.36,1), border-color 0.3s ease, box-shadow 0.35s ease;
 }
 .gz-card:hover {
-  border-color: #f59e0b;
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(245,158,11,0.15);
+  border-color: rgba(245,158,11,0.5);
+  transform: translateY(-6px);
+  box-shadow: 0 20px 45px rgba(0,0,0,0.35), 0 0 0 1px rgba(245,158,11,0.1), 0 10px 25px rgba(245,158,11,0.12);
 }
 
-/* ── Product badges ── */
-.badge-new  { background: #22c55e; color: #fff; }
-.badge-hot  { background: #ef4444; color: #fff; }
-.badge-sale { background: #f59e0b; color: #0a0a0f; }
+/* ── Product badges — translucent pills ── */
+.gz-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  backdrop-filter: blur(6px);
+}
+.badge-new  { background: rgba(34,197,94,0.14);  color: #4ade80; border-color: rgba(34,197,94,0.35); }
+.badge-hot  { background: rgba(239,68,68,0.14);  color: #f87171; border-color: rgba(239,68,68,0.4); animation: badge-pulse 1.8s ease-in-out infinite; }
+.badge-sale { background: rgba(245,158,11,0.16); color: #fcd34d; border-color: rgba(245,158,11,0.45); }
 
 /* ── Form inputs ── */
 .gz-input {
@@ -215,6 +227,21 @@ select:focus-visible,
   height: 2px;
   background: #f59e0b;
   flex-shrink: 0;
+}
+
+.section-title {
+  font-family: "Bricolage Grotesque", sans-serif;
+  font-size: clamp(1.7rem, 3vw, 2rem);
+  font-weight: 800;
+  color: var(--gz-text);
+  letter-spacing: -0.01em;
+}
+.section-subtitle {
+  margin: 10px auto 0;
+  max-width: 560px;
+  font-size: 0.95rem;
+  color: var(--gz-text2);
+  line-height: 1.7;
 }
 
 /* ── Stars ── */
@@ -450,9 +477,46 @@ input[type="range"] { accent-color: #f59e0b; }
 .cat-icon {
   border-radius: 50%;
   border: 1.5px solid var(--gz-border);
-  transition: border-color 0.25s ease, transform 0.25s ease;
+  background: linear-gradient(155deg, rgba(245,158,11,0.14), var(--gz-surface2) 65%);
+  color: #f59e0b;
+  transition: border-color 0.25s ease, transform 0.25s ease, background 0.25s ease;
 }
-.cat-card:hover .cat-icon { border-color: var(--gz-accent2); transform: scale(1.06); }
+.cat-card:hover .cat-icon {
+  border-color: var(--gz-accent2);
+  transform: scale(1.06);
+  background: linear-gradient(155deg, rgba(245,158,11,0.24), var(--gz-surface2) 65%);
+}
+
+/* ── Shared hover targets — replaces repeated inline onMouseEnter/onMouseLeave ── */
+.gz-nav-link, .gz-icon-btn {
+  color: var(--gz-text2);
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+.gz-nav-link:hover, .gz-icon-btn:hover {
+  color: #f59e0b;
+  background: rgba(245,158,11,0.08);
+}
+.gz-icon-btn.danger:hover {
+  color: #ef4444;
+  background: rgba(239,68,68,0.08);
+}
+/* Plain text link — no padding/background, just a color shift (footer, breadcrumbs) */
+.gz-text-link {
+  color: var(--gz-text2);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.gz-text-link:hover { color: #f59e0b; }
+
+/* Primary nav link — brighter base color than .gz-nav-link (desktop header nav) */
+.gz-nav-link-strong {
+  color: var(--gz-text);
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+.gz-nav-link-strong:hover {
+  color: #f59e0b;
+  background: rgba(245,158,11,0.08);
+}
 
 /* ── Scroll reveal ── */
 .reveal-up, .reveal-left, .reveal-right, .reveal-scale {
@@ -469,8 +533,21 @@ input[type="range"] { accent-color: #f59e0b; }
 .reveal-right.is-visible,
 .reveal-scale.is-visible { opacity: 1; transform: none; }
 
-/* ── Newsletter ── */
-.newsletter-section { background: #f59e0b; }
+/* ── Newsletter — dark section with a diffuse amber halo instead of a solid block ── */
+.newsletter-section {
+  position: relative;
+  background: var(--gz-bg);
+  border-top: 1px solid var(--gz-border2);
+  border-bottom: 1px solid var(--gz-border2);
+  overflow: hidden;
+}
+.newsletter-section::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(640px circle at 50% 0%, rgba(245,158,11,0.18), transparent 65%);
+  pointer-events: none;
+}
 
 /* ── Table ── */
 .gz-table { width: 100%; border-collapse: collapse; }
@@ -540,3 +617,10 @@ input[type="range"] { accent-color: #f59e0b; }
 [data-theme="light"] .account-nav-item { color: #55556a; }
 [data-theme="light"] .account-nav-item:hover { background: rgba(0,0,0,0.05); color: #111118; }
 [data-theme="light"] .account-nav-item.active { background: rgba(245,158,11,0.15); color: #d97706; }
+
+/* Badge pills need darker text on light backgrounds to stay readable */
+[data-theme="light"] .badge-new  { color: #15803d; }
+[data-theme="light"] .badge-hot  { color: #dc2626; }
+[data-theme="light"] .badge-sale { color: #b45309; }
+
+[data-theme="light"] .newsletter-section::before { opacity: 0.55; }

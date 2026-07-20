@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { ShoppingCart, Search, User, Menu, X, LogOut, LayoutDashboard, Shield, Sun, Moon } from "lucide-react"
 import { useAuthStore, useCartStore } from "../../lib/store.js"
 import { useTheme } from "../../lib/ThemeContext.jsx"
-import LogoMark from "../Logo.jsx"
+import LogoMark, { LogoWordmark } from "../Logo.jsx"
 
 const NAV = [
   { label: "Home",        path: "/" },
@@ -61,14 +61,7 @@ export default function Header() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 shrink-0" style={{ textDecoration: "none" }}>
             <LogoMark size={40} />
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <span style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "1.35rem", fontWeight: "800", color: "#f59e0b", lineHeight: "1.15", letterSpacing: "-0.01em" }}>
-                Gadget<span style={{ color: "var(--gz-text)" }}>Zone</span>
-              </span>
-              <span style={{ fontSize: "0.6rem", color: "var(--gz-text2)", letterSpacing: "0.18em", textTransform: "uppercase", fontWeight: "600" }}>
-                Tech Store
-              </span>
-            </div>
+            <LogoWordmark fontSize="1.35rem" />
           </Link>
 
           {/* Desktop nav */}
@@ -77,9 +70,8 @@ export default function Header() {
               <Link
                 key={item.label}
                 to={item.path}
-                style={{ color: "var(--gz-text)", fontSize: "1rem", fontWeight: "600", padding: "9px 16px", borderRadius: "9px", transition: "all 0.15s", textDecoration: "none" }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = "#f59e0b"; e.currentTarget.style.background = "rgba(245,158,11,0.08)" }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = "var(--gz-text)"; e.currentTarget.style.background = "transparent" }}
+                className="gz-nav-link-strong"
+                style={{ fontSize: "1rem", fontWeight: "600", padding: "9px 16px", borderRadius: "9px", textDecoration: "none" }}
               >
                 {item.label}
               </Link>
@@ -92,9 +84,8 @@ export default function Header() {
             <button
               onClick={toggle}
               title={theme === 'dark' ? 'Mode clair' : 'Mode sombre'}
-              style={{ padding: "9px", borderRadius: "9px", color: "var(--gz-text2)", background: "transparent", border: "none", cursor: "pointer", overflow: "hidden", display: "flex" }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = "#f59e0b"; e.currentTarget.style.background = "rgba(245,158,11,0.08)" }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = "var(--gz-text2)"; e.currentTarget.style.background = "transparent" }}
+              className="gz-icon-btn"
+              style={{ padding: "9px", borderRadius: "9px", background: "transparent", border: "none", cursor: "pointer", overflow: "hidden", display: "flex" }}
             >
               <AnimatePresence mode="wait" initial={false}>
                 <motion.span
@@ -113,9 +104,8 @@ export default function Header() {
             {/* Search */}
             <button
               onClick={() => setSearchOpen((v) => !v)}
-              style={{ padding: "9px", borderRadius: "9px", color: "var(--gz-text2)", background: "transparent", border: "none", cursor: "pointer" }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = "#f59e0b"; e.currentTarget.style.background = "rgba(245,158,11,0.08)" }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = "var(--gz-text2)"; e.currentTarget.style.background = "transparent" }}
+              className="gz-icon-btn"
+              style={{ padding: "9px", borderRadius: "9px", background: "transparent", border: "none", cursor: "pointer" }}
             >
               <Search size={20} />
             </button>
@@ -124,9 +114,8 @@ export default function Header() {
             <Link
               id="gz-cart-icon"
               to="/cart"
-              style={{ position: "relative", padding: "9px", borderRadius: "9px", color: "var(--gz-text2)", display: "flex", alignItems: "center", textDecoration: "none" }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = "#f59e0b"; e.currentTarget.style.background = "rgba(245,158,11,0.08)" }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = "var(--gz-text2)"; e.currentTarget.style.background = "transparent" }}
+              className="gz-icon-btn"
+              style={{ position: "relative", padding: "9px", borderRadius: "9px", display: "flex", alignItems: "center", textDecoration: "none" }}
             >
               <ShoppingCart size={20} />
               <span
@@ -149,9 +138,8 @@ export default function Header() {
               <div className="hidden sm:flex items-center gap-1">
                 <Link
                   to="/account"
-                  style={{ padding: "8px 12px", borderRadius: "8px", color: "var(--gz-text2)", fontSize: "0.8rem", fontWeight: "500", textDecoration: "none", display: "flex", alignItems: "center", gap: "6px" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = "#f59e0b"; e.currentTarget.style.background = "rgba(245,158,11,0.08)" }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = "#9090a8"; e.currentTarget.style.background = "transparent" }}
+                  className="gz-icon-btn"
+                  style={{ padding: "8px 12px", borderRadius: "8px", fontSize: "0.8rem", fontWeight: "500", textDecoration: "none", display: "flex", alignItems: "center", gap: "6px" }}
                 >
                   <User size={15} />
                   {user && user.username ? user.username.split(" ")[0] : "Account"}
@@ -159,9 +147,8 @@ export default function Header() {
                 {user && (user.role === "admin" || user.role === "super_admin") && (
                   <Link
                     to="/admin"
-                    style={{ padding: "8px", borderRadius: "8px", color: "var(--gz-text2)", display: "flex", textDecoration: "none" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = "#f59e0b"; e.currentTarget.style.background = "rgba(245,158,11,0.08)" }}
-                    onMouseLeave={(e) => { e.currentTarget.style.color = "#9090a8"; e.currentTarget.style.background = "transparent" }}
+                    className="gz-icon-btn"
+                    style={{ padding: "8px", borderRadius: "8px", display: "flex", textDecoration: "none" }}
                     title="Admin"
                   >
                     <Shield size={15} />
@@ -169,9 +156,8 @@ export default function Header() {
                 )}
                 <button
                   onClick={handleLogout}
-                  style={{ padding: "8px", borderRadius: "8px", color: "var(--gz-text2)", background: "transparent", border: "none", cursor: "pointer", display: "flex" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = "#ef4444"; e.currentTarget.style.background = "rgba(239,68,68,0.08)" }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = "#9090a8"; e.currentTarget.style.background = "transparent" }}
+                  className="gz-icon-btn danger"
+                  style={{ padding: "8px", borderRadius: "8px", background: "transparent", border: "none", cursor: "pointer", display: "flex" }}
                   title="Logout"
                 >
                   <LogOut size={15} />
@@ -182,8 +168,8 @@ export default function Header() {
                 <Link
                   to="/login"
                   style={{ padding: "7px 14px", borderRadius: "8px", color: "var(--gz-text2)", fontSize: "0.85rem", fontWeight: "500", textDecoration: "none" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = "#f0f0f5" }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = "#9090a8" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = "var(--gz-text)" }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = "var(--gz-text2)" }}
                 >
                   Sign In
                 </Link>
@@ -236,9 +222,8 @@ export default function Header() {
                 key={item.label}
                 to={item.path}
                 onClick={() => setMobileOpen(false)}
-                style={{ padding: "12px 16px", borderRadius: "10px", color: "var(--gz-text2)", fontSize: "0.9rem", fontWeight: "500", textDecoration: "none" }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = "#f59e0b"; e.currentTarget.style.background = "rgba(245,158,11,0.08)" }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = "#9090a8"; e.currentTarget.style.background = "transparent" }}
+                className="gz-nav-link"
+                style={{ padding: "12px 16px", borderRadius: "10px", fontSize: "0.9rem", fontWeight: "500", textDecoration: "none" }}
               >
                 {item.label}
               </Link>
@@ -246,16 +231,16 @@ export default function Header() {
             <div style={{ borderTop: "1px solid var(--gz-border2)", marginTop: "8px", paddingTop: "12px", display: "flex", flexDirection: "column", gap: "4px" }}>
               {isLoggedIn() ? (
                 <>
-                  <Link to="/account" onClick={() => setMobileOpen(false)} style={{ padding: "12px 16px", borderRadius: "10px", color: "var(--gz-text2)", fontSize: "0.9rem", textDecoration: "none", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <Link to="/account" onClick={() => setMobileOpen(false)} className="gz-nav-link" style={{ padding: "12px 16px", borderRadius: "10px", fontSize: "0.9rem", textDecoration: "none", display: "flex", alignItems: "center", gap: "8px" }}>
                     <User size={16} /> My Account
                   </Link>
-                  <button onClick={handleLogout} style={{ padding: "12px 16px", borderRadius: "10px", color: "#ef4444", fontSize: "0.9rem", textAlign: "left", background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <button onClick={handleLogout} className="gz-icon-btn danger" style={{ padding: "12px 16px", borderRadius: "10px", color: "#ef4444", fontSize: "0.9rem", textAlign: "left", background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}>
                     <LogOut size={16} /> Logout
                   </button>
                 </>
               ) : (
                 <>
-                  <Link to="/login" onClick={() => setMobileOpen(false)} style={{ padding: "12px 16px", borderRadius: "10px", color: "var(--gz-text2)", fontSize: "0.9rem", textDecoration: "none" }}>
+                  <Link to="/login" onClick={() => setMobileOpen(false)} className="gz-nav-link" style={{ padding: "12px 16px", borderRadius: "10px", fontSize: "0.9rem", textDecoration: "none" }}>
                     Sign In
                   </Link>
                   <Link to="/register" onClick={() => setMobileOpen(false)} style={{ margin: "4px 16px", padding: "12px", borderRadius: "10px", background: "#f59e0b", color: "#0a0a0f", fontSize: "0.9rem", fontWeight: "700", textDecoration: "none", textAlign: "center" }}>

@@ -16,9 +16,8 @@ export default function Testimonials() {
       <div className="gz-container" ref={ref}>
         <div className={`reveal-up${isVisible ? " is-visible" : ""}`} style={{ textAlign: "center", marginBottom: "48px" }}>
           <div className="section-label">What Customers Say</div>
-          <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "1.7rem", fontWeight: "700", color: "var(--gz-text)" }}>
-            Customer Reviews
-          </h2>
+          <h2 className="section-title">Customer Reviews</h2>
+          <p className="section-subtitle">Real feedback from real GadgetZone shoppers around the world.</p>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px,1fr))", gap: "20px" }}>
           {TESTIMONIALS.map((t, i) => (

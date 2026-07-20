@@ -42,7 +42,8 @@ export default function DealOfDay() {
       <div className="gz-container" ref={ref}>
         <div className={`reveal-up${isVisible ? " is-visible" : ""}`} style={{ textAlign: "center", marginBottom: "48px" }}>
           <div className="section-label">Limited Time</div>
-          <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "clamp(2rem, 4vw, 2.6rem)", fontWeight: "800", color: "var(--gz-text)" }}>Deal of the Day</h2>
+          <h2 className="section-title" style={{ fontSize: "clamp(1.8rem, 4vw, 2.4rem)" }}>Deal of the Day</h2>
+          <p className="section-subtitle">One standout product, one price, gone at midnight.</p>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: "48px", alignItems: "center" }}>

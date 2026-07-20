@@ -150,12 +150,11 @@ export default function ProductPage() {
     setTimeout(() => setAdded(false), 2000)
   }
 
-  const badgeStyle = { display: "inline-block", padding: "4px 10px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "700", textTransform: "uppercase" }
-  const getBadge = (b) => {
-    if (b === "NEW")  return { ...badgeStyle, background: "#22c55e", color: "#fff" }
-    if (b === "HOT")  return { ...badgeStyle, background: "#ef4444", color: "#fff" }
-    if (b === "SALE") return { ...badgeStyle, background: "#f59e0b", color: "#0a0a0f" }
-    return {}
+  const badgeClassFor = (b) => {
+    if (b === "NEW")  return "badge-new"
+    if (b === "HOT")  return "badge-hot"
+    if (b === "SALE") return "badge-sale"
+    return ""
   }
 
   const avgRating = reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : product.rating
@@ -181,14 +180,14 @@ export default function ProductPage() {
 
           {/* Image */}
           <div>
-            <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "20px", overflow: "hidden", aspectRatio: "1", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div className="pc-image-wrap" style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "20px", aspectRatio: "1", height: "auto", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <img src={product.image_url} alt={product.name} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             </div>
           </div>
 
           {/* Info */}
           <div>
-            {product.badge && <span style={getBadge(product.badge)}>{product.badge}</span>}
+            {product.badge && <span className={`gz-badge ${badgeClassFor(product.badge)}`}>{product.badge}</span>}
             <div style={{ fontSize: "0.8rem", color: "#f59e0b", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.1em", marginTop: "12px", marginBottom: "8px" }}>{product.category_name}</div>
             <h1 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "1.8rem", fontWeight: "800", color: "var(--gz-text)", marginBottom: "16px", lineHeight: "1.2" }}>{product.name}</h1>
 
