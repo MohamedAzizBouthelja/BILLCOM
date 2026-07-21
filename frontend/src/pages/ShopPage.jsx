@@ -119,7 +119,7 @@ export default function ShopPage() {
           }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
               <h3 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", fontSize: "1rem", color: "var(--gz-text)" }}>Filters</h3>
-              <button onClick={clearAll} style={{ fontSize: "0.75rem", color: "var(--gz-text2)", background: "none", border: "none", cursor: "pointer" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "#9090a8"}>Clear All</button>
+              <button onClick={clearAll} className="btn-ghost" style={{ padding: "4px 10px", fontSize: "0.75rem" }}>Clear All</button>
             </div>
 
             {/* Category */}

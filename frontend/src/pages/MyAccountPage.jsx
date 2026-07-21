@@ -136,7 +136,11 @@ export default function MyAccountPage() {
                   {ordersLoading && orders.length === 0 ? (
                     <SkeletonRows count={3} cols={5} />
                   ) : orders.length === 0 ? (
-                    <div style={{ padding: "40px", textAlign: "center", color: "var(--gz-text2)" }}>No orders yet. <Link to="/shop" style={{ color: "#f59e0b" }}>Start shopping!</Link></div>
+                    <div style={{ padding: "48px", textAlign: "center", color: "var(--gz-text2)" }}>
+                      <ShoppingBag size={40} style={{ margin: "0 auto 12px", color: "#f59e0b" }} />
+                      <p>No orders yet.</p>
+                      <Link to="/shop" className="btn-primary" style={{ marginTop: "16px", display: "inline-flex" }}>Shop Now</Link>
+                    </div>
                   ) : (
                     <div style={{ overflowX: "auto" }}>
                       <table className="gz-table">

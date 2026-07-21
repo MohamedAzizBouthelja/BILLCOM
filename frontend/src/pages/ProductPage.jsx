@@ -268,7 +268,7 @@ export default function ProductPage() {
           <div>
             {product.badge && <span className={`gz-badge ${badgeClassFor(product.badge)}`}>{product.badge}</span>}
             <div style={{ fontSize: "0.8rem", color: "#f59e0b", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.1em", marginTop: "12px", marginBottom: "8px" }}>{product.category_name}</div>
-            <h1 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "1.8rem", fontWeight: "800", color: "var(--gz-text)", marginBottom: "16px", lineHeight: "1.2" }}>{product.name}</h1>
+            <h1 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "1.9rem", fontWeight: "800", letterSpacing: "-0.015em", color: "var(--gz-text)", marginBottom: "16px", lineHeight: "1.2" }}>{product.name}</h1>
 
             {/* Rating */}
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
@@ -278,8 +278,8 @@ export default function ProductPage() {
             </div>
 
             {/* Price */}
-            <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "24px" }}>
-              <span style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "2.2rem", fontWeight: "800", color: "#f59e0b" }}>{formatPrice(product.price)}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "24px", fontVariantNumeric: "tabular-nums" }}>
+              <span style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "2.2rem", fontWeight: "800", letterSpacing: "-0.015em", color: "#f59e0b" }}>{formatPrice(product.price)}</span>
               {product.old_price && (
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>

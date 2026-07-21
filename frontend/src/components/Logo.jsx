@@ -1,8 +1,10 @@
-import { useState } from "react"
+import { useState, useId } from "react"
 import { motion } from "framer-motion"
 import { usePerformance } from "../hooks/usePerformance"
 
-const BOLT_PATH = "M13 2 4 14h6l-1 8 9-12h-6l1-8z"
+// Bold faceted "Z" monogram, drawn as a single stroked path (miter joins keep
+// the three segments — top bar / diagonal / bottom bar — perfectly seamless).
+const Z_PATH = "M 50 66 L 150 66 L 50 134 L 150 134"
 
 const SPARKS = [
   { dx: -16, dy: -13, delay: 0 },
@@ -14,6 +16,7 @@ export default function LogoMark({ size = 40 }) {
   const { shouldReduceMotion } = usePerformance()
   const [hovered, setHovered] = useState(false)
   const [burstId, setBurstId] = useState(0)
+  const gradId = useId()
 
   return (
     <div
@@ -30,42 +33,43 @@ export default function LogoMark({ size = 40 }) {
         style={{
           width: size,
           height: size,
-          borderRadius: size * 0.28,
-          background: "linear-gradient(135deg, #f59e0b 0%, #fcd34d 100%)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          boxShadow: hovered ? "0 0 18px rgba(245,158,11,0.55)" : "0 0 0 rgba(245,158,11,0)",
-          transition: "box-shadow 0.25s ease",
+          filter: hovered ? "drop-shadow(0 0 10px rgba(245,158,11,0.55))" : "drop-shadow(0 0 0 rgba(245,158,11,0))",
+          transition: "filter 0.25s ease",
         }}
       >
-        <svg width={size * 0.5} height={size * 0.5} viewBox="0 0 24 24" fill="none">
+        <svg width={size} height={size} viewBox="0 0 200 200" fill="none">
+          <defs>
+            <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#fcd34d" />
+              <stop offset="55%" stopColor="#f59e0b" />
+              <stop offset="100%" stopColor="#d97706" />
+            </linearGradient>
+          </defs>
+
+          {/* Rounded-square frame — outline only, transparent inside */}
+          <rect x="14" y="14" width="172" height="172" rx="40" stroke={`url(#${gradId})`} strokeWidth="11" />
+
           {shouldReduceMotion ? (
-            <path d={BOLT_PATH} fill="#0a0a0f" />
+            <path d={Z_PATH} stroke={`url(#${gradId})`} strokeWidth="32" strokeLinecap="square" strokeLinejoin="miter" />
           ) : (
-            <>
-              {/* Phase 1 — traces the outline once on mount */}
-              <motion.path
-                d={BOLT_PATH}
-                fill="transparent"
-                stroke="#0a0a0f"
-                strokeWidth={1.4}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: 1 }}
-                transition={{ duration: 0.7, ease: [0.65, 0, 0.35, 1] }}
-              />
-              {/* Phase 2 — fill fades in as the trace finishes */}
-              <motion.path
-                d={BOLT_PATH}
-                fill="#0a0a0f"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.35, delay: 0.5 }}
-              />
-            </>
+            <motion.path
+              d={Z_PATH}
+              stroke={`url(#${gradId})`}
+              strokeWidth="32"
+              strokeLinecap="square"
+              strokeLinejoin="miter"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{ duration: 0.7, ease: [0.65, 0, 0.35, 1] }}
+            />
           )}
+
+          {/* Facet seams — subtle highlight/shadow suggesting folded facets */}
+          <line x1="66" y1="58" x2="82" y2="74" stroke="#fff7ed" strokeWidth="2" strokeOpacity="0.4" strokeLinecap="round" />
+          <line x1="118" y1="126" x2="134" y2="142" stroke="#78350f" strokeWidth="2" strokeOpacity="0.35" strokeLinecap="round" />
         </svg>
       </motion.div>
 

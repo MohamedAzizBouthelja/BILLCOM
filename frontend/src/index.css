@@ -24,6 +24,28 @@
   --gz-border:   rgba(255,255,255,0.08);
   --gz-border2:  rgba(255,255,255,0.06);
   --gz-accent2:  #38bdf8;
+
+  /* ── Spacing scale (4/8pt grid) — replaces ad-hoc px values across components ── */
+  --gz-space-1: 4px;
+  --gz-space-2: 8px;
+  --gz-space-3: 12px;
+  --gz-space-4: 16px;
+  --gz-space-5: 24px;
+  --gz-space-6: 32px;
+  --gz-space-7: 48px;
+  --gz-space-8: 64px;
+
+  /* ── Radius scale ── */
+  --gz-radius-sm:   8px;
+  --gz-radius-md:  12px;
+  --gz-radius-lg:  16px;
+  --gz-radius-xl:  20px;
+  --gz-radius-pill: 999px;
+
+  /* ── Elevation scale — layered shadows (neutral depth + amber halo) ── */
+  --gz-shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --gz-shadow-md: 0 8px 24px -4px rgba(0,0,0,0.35);
+  --gz-shadow-lg: 0 24px 48px -14px rgba(0,0,0,0.45), 0 0 0 1px rgba(245,158,11,0.12), 0 10px 22px -10px rgba(245,158,11,0.18);
 }
 
 [data-theme="light"] {
@@ -44,6 +66,18 @@
 }
 
 html { scroll-behavior: smooth; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Heading rhythm — applies everywhere without touching each page ── */
+h1, h2, h3 { text-wrap: balance; }
 
 body {
   font-family: "DM Sans", system-ui, sans-serif;
@@ -112,16 +146,27 @@ select:focus-visible,
   font-family: "DM Sans", sans-serif;
   font-weight: 700;
   font-size: 0.9rem;
-  border-radius: 10px;
+  border-radius: var(--gz-radius-md);
   border: none;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, opacity 0.15s ease;
   text-decoration: none;
 }
 .btn-primary:hover {
   background: #fcd34d;
   transform: translateY(-1px);
   box-shadow: 0 8px 25px rgba(245,158,11,0.35);
+}
+.btn-primary:active {
+  transform: translateY(0) scale(0.97);
+  box-shadow: 0 4px 14px rgba(245,158,11,0.3);
+}
+.btn-primary:disabled,
+.btn-primary[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 .btn-primary::after {
   content: "";
@@ -149,10 +194,10 @@ select:focus-visible,
   font-family: "DM Sans", sans-serif;
   font-weight: 600;
   font-size: 0.9rem;
-  border-radius: 10px;
+  border-radius: var(--gz-radius-md);
   border: 1.5px solid var(--gz-border);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
   text-decoration: none;
 }
 .btn-outline:hover {
@@ -160,18 +205,60 @@ select:focus-visible,
   color: #f59e0b;
   transform: translateY(-1px);
 }
+.btn-outline:active { transform: translateY(0) scale(0.97); }
+.btn-outline:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Ghost button — third tier for low-emphasis actions (cancel, clear filters) ── */
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  background: transparent;
+  color: var(--gz-text2);
+  font-family: "DM Sans", sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border-radius: var(--gz-radius-md);
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  text-decoration: none;
+}
+.btn-ghost:hover { background: rgba(245,158,11,0.1); color: #f59e0b; }
+.btn-ghost:active { background: rgba(245,158,11,0.16); }
+.btn-ghost:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* ── Cards ── */
 .gz-card {
   background: linear-gradient(180deg, color-mix(in srgb, var(--gz-surface) 100%, white 3%) 0%, var(--gz-surface) 100%);
   border: 1px solid var(--gz-border2);
-  border-radius: 14px;
-  transition: transform 0.35s cubic-bezier(0.22,1,0.36,1), border-color 0.3s ease, box-shadow 0.35s ease;
+  border-radius: var(--gz-radius-lg);
+  transition: transform 0.45s cubic-bezier(0.22,1,0.36,1), border-color 0.35s ease, box-shadow 0.45s cubic-bezier(0.22,1,0.36,1);
 }
 .gz-card:hover {
-  border-color: rgba(245,158,11,0.5);
-  transform: translateY(-6px);
-  box-shadow: 0 20px 45px rgba(0,0,0,0.35), 0 0 0 1px rgba(245,158,11,0.1), 0 10px 25px rgba(245,158,11,0.12);
+  border-color: rgba(245,158,11,0.4);
+  transform: translateY(-8px);
+  box-shadow: var(--gz-shadow-lg);
+}
+
+/* ── Spotlight — soft light following the cursor; JS sets --gz-mx/--gz-my ── */
+.gz-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(220px circle at var(--gz-mx, 50%) var(--gz-my, 50%), rgba(245,158,11,0.16), transparent 65%);
+  transition: opacity 0.3s ease;
+}
+.gz-card:hover::before { opacity: 1; }
+@media (prefers-reduced-motion: reduce), (pointer: coarse) {
+  .gz-card::before { display: none; }
 }
 
 /* ── Product badges — translucent pills ── */
@@ -245,7 +332,7 @@ select:focus-visible,
   font-size: clamp(1.7rem, 3vw, 2rem);
   font-weight: 800;
   color: var(--gz-text);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 .section-subtitle {
   margin: 10px auto 0;
@@ -294,12 +381,12 @@ select:focus-visible,
 .animate-fadeInUp { animation: fadeInUp 0.5s ease forwards; }
 .animate-float    { animation: float 5s ease-in-out infinite; }
 
-/* ── Skeleton loader ── */
+/* ── Skeleton loader — theme-aware (was hardcoded dark, broke in light mode) ── */
 .skeleton {
-  background: linear-gradient(90deg, #16161f 25%, #1e1e2a 50%, #16161f 75%);
+  background: linear-gradient(90deg, var(--gz-surface2) 25%, var(--gz-surface) 50%, var(--gz-surface2) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-  border-radius: 8px;
+  border-radius: var(--gz-radius-sm);
 }
 
 /* ── Range slider amber ── */
