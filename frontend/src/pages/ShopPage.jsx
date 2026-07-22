@@ -3,6 +3,7 @@ import { useSearchParams, Link } from "react-router-dom"
 import { Search, SlidersHorizontal, X, Flame } from "lucide-react"
 import { useProductStore, CATEGORIES, formatPrice } from "../lib/store.js"
 import ProductCard from "../components/ecommerce/ProductCard.jsx"
+import ProductCardSkeleton from "../components/ecommerce/ProductCardSkeleton.jsx"
 import { useScrollReveal } from "../hooks/useScrollReveal.js"
 
 const PER_PAGE = 9
@@ -43,7 +44,7 @@ function SaleBanner({ products }) {
 }
 
 export default function ShopPage() {
-  const { products } = useProductStore()
+  const { products, loading } = useProductStore()
   const [searchParams, setSearchParams] = useSearchParams()
   const [priceMax, setPriceMax] = useState(300000)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -100,7 +101,7 @@ export default function ShopPage() {
 
         {/* Breadcrumb */}
         <div style={{ fontSize: "0.8rem", color: "var(--gz-text2)", marginBottom: "24px", display: "flex", gap: "6px", alignItems: "center" }}>
-          <Link to="/" style={{ color: "var(--gz-text2)", textDecoration: "none" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "#9090a8"}>Home</Link>
+          <Link to="/" style={{ color: "var(--gz-text2)", textDecoration: "none" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "var(--gz-text2)"}>Home</Link>
           <span>›</span>
           <span style={{ color: "var(--gz-text)" }}>Shop</span>
           {cat && cat !== "all" && <><span>›</span><span style={{ color: "#f59e0b", textTransform: "capitalize" }}>{cat}</span></>}
@@ -135,7 +136,7 @@ export default function ShopPage() {
                     onChange={() => setParam("cat", c.slug === "all" ? "" : c.slug)}
                     style={{ accentColor: "#f59e0b" }}
                   />
-                  <span style={{ fontSize: "0.875rem", color: cat === c.slug ? "#f59e0b" : "#9090a8", flex: 1 }}>{c.name}</span>
+                  <span style={{ fontSize: "0.875rem", color: cat === c.slug ? "#f59e0b" : "var(--gz-text2)", flex: 1 }}>{c.name}</span>
                   <span style={{ fontSize: "0.75rem", color: "var(--gz-text2)" }}>({c.count})</span>
                 </label>
               ))}
@@ -154,7 +155,7 @@ export default function ShopPage() {
                 style={{ width: "100%", accentColor: "#f59e0b" }}
               />
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.72rem", color: "var(--gz-text2)", marginTop: "4px" }}>
-                <span>৳999</span><span>৳3,00,000</span>
+                <span>{formatPrice(999)}</span><span>{formatPrice(300000)}</span>
               </div>
             </div>
 
@@ -164,7 +165,7 @@ export default function ShopPage() {
               {[{ v: "", l: "All" }, { v: "NEW", l: "New" }, { v: "HOT", l: "Hot" }, { v: "SALE", l: "Sale" }].map((b) => (
                 <label key={b.v} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px", cursor: "pointer" }}>
                   <input type="radio" name="badge" className="filter-radio" checked={badge === b.v} onChange={() => setParam("badge", b.v)} style={{ accentColor: "#f59e0b" }} />
-                  <span style={{ fontSize: "0.875rem", color: badge === b.v ? "#f59e0b" : "#9090a8" }}>{b.l}</span>
+                  <span style={{ fontSize: "0.875rem", color: badge === b.v ? "#f59e0b" : "var(--gz-text2)" }}>{b.l}</span>
                 </label>
               ))}
             </div>
@@ -175,7 +176,7 @@ export default function ShopPage() {
               {[{ v: 0, l: "All Ratings" }, { v: 4, l: "4★ & above" }, { v: 3, l: "3★ & above" }].map((r) => (
                 <label key={r.v} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px", cursor: "pointer" }}>
                   <input type="radio" name="minRating" className="filter-radio" checked={minRating === r.v} onChange={() => setParam("minRating", r.v ? String(r.v) : "")} style={{ accentColor: "#f59e0b" }} />
-                  <span style={{ fontSize: "0.875rem", color: minRating === r.v ? "#f59e0b" : "#9090a8" }}>{r.l}</span>
+                  <span style={{ fontSize: "0.875rem", color: minRating === r.v ? "#f59e0b" : "var(--gz-text2)" }}>{r.l}</span>
                 </label>
               ))}
             </div>
@@ -207,7 +208,11 @@ export default function ShopPage() {
             </div>
 
             {/* Grid */}
-            {paged.length === 0 ? (
+            {loading ? (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px,1fr))", gap: "20px" }}>
+                {Array.from({ length: PER_PAGE }, (_, i) => <ProductCardSkeleton key={i} />)}
+              </div>
+            ) : paged.length === 0 ? (
               <div style={{ textAlign: "center", padding: "80px 24px" }}>
                 <div style={{ fontSize: "3rem", marginBottom: "16px" }}>🔍</div>
                 <h3 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", fontSize: "1.2rem", color: "var(--gz-text)", marginBottom: "8px" }}>No products found</h3>

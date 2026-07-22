@@ -559,6 +559,57 @@ input[type="range"] { accent-color: #f59e0b; }
 }
 .pc-image-wrap:hover .pc-quickview-pill { transform: translateY(0); }
 
+/* ── Theme toggle circular reveal — disable the browser's default cross-fade
+   so only our JS-driven clip-path circle (see ThemeContext.jsx) animates ── */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) { z-index: 1; }
+::view-transition-new(root) { z-index: 2; }
+
+/* ── Cart badge bump — quick scale pulse whenever an item is added ── */
+.cart-badge-bump { animation: cart-bump 0.35s ease; }
+@keyframes cart-bump {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+/* ── Skip link — hidden until keyboard-focused, lets keyboard users bypass
+   the fixed nav instead of tabbing through every header control first ── */
+.skip-link {
+  position: absolute;
+  top: -48px;
+  left: 16px;
+  z-index: 2000;
+  background: #f59e0b;
+  color: #0a0a0f;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 10px 18px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: top 0.2s ease;
+}
+.skip-link:focus {
+  top: 16px;
+}
+
+/* ── Category grid — fixed column count so the last row stays full instead of
+   wrapping a lone orphan card (auto-fit reflows unevenly once the count isn't
+   a clean multiple of the row width). 8 categories today divides evenly by
+   both breakpoints below. ── */
+.cat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+@media (max-width: 860px) {
+  .cat-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
 /* ── Category card ── */
 .cat-card {
   background: var(--gz-surface);

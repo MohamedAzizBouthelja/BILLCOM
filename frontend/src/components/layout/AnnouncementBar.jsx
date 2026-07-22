@@ -1,7 +1,8 @@
 import { Truck, Sparkles, Undo2 } from "lucide-react"
+import { formatPrice } from "../../lib/store.js"
 
 const ITEMS = [
-  { icon: Truck, text: "Free delivery on orders over ৳5,000" },
+  { icon: Truck, text: `Free delivery on orders over ${formatPrice(5000)}` },
   { icon: Sparkles, text: "New gadgets added every week" },
   { icon: Undo2, text: "7-day hassle-free returns" },
 ]

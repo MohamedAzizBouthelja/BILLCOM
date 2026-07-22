@@ -1,4 +1,4 @@
-import { Smartphone, Laptop, Headphones, Camera, Watch, Cable } from "lucide-react"
+import { Smartphone, Laptop, Headphones, Camera, Watch, Cable, Tablet, Gamepad2 } from "lucide-react"
 
 export const CATEGORY_ICONS = {
   smartphones: Smartphone,
@@ -7,4 +7,6 @@ export const CATEGORY_ICONS = {
   cameras: Camera,
   wearables: Watch,
   accessories: Cable,
+  tablets: Tablet,
+  gaming: Gamepad2,
 }

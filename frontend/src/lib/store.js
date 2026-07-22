@@ -39,6 +39,8 @@ export const CATEGORIES = [
   { slug:"cameras",     name:"Cameras",     image:"/icons/camera.gif"       },
   { slug:"wearables",   name:"Wearables",   image:"/icons/wearables.png"    },
   { slug:"accessories", name:"Accessories", image:"/icons/accessories.png"  },
+  { slug:"tablets",     name:"Tablets",     image:"/icons/smartphone.gif"   },
+  { slug:"gaming",      name:"Gaming",      image:"/icons/accessories.png"  },
 ]
 
 export const useAuthStore = create(
@@ -166,7 +168,7 @@ export const useProductStore = create((set, get) => ({
       if (params.featured)  qs.set("featured", params.featured)
       if (params.sort)      qs.set("sort", params.sort)
       if (params.page)      qs.set("page", params.page)
-      if (params.per_page)  qs.set("per_page", params.per_page || 100)
+      qs.set("per_page", params.per_page || 100)
 
       const url = PRODUCT_SERVICE + "/api/v1/products?" + qs.toString()
       const res = await fetch(url)
@@ -259,4 +261,7 @@ export const useOrderStore = create((set) => ({
   },
 }))
 
-export const formatPrice = (price) => String.fromCharCode(2547) + Number(price).toLocaleString()
+// Prices are stored in cents (matches Stripe's unit_amount, see order-service
+// stripe checkout) — divide by 100 to get the USD amount actually charged.
+export const formatPrice = (price) =>
+  "$" + (Number(price) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })

@@ -76,7 +76,7 @@ export default function MyAccountPage() {
       <div className="gz-container" style={{ paddingTop: "32px", paddingBottom: "32px" }}>
 
         <div style={{ fontSize: "0.8rem", color: "var(--gz-text2)", marginBottom: "24px" }}>
-          <Link to="/" style={{ color: "var(--gz-text2)", textDecoration: "none" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "#9090a8"}>Home</Link>
+          <Link to="/" style={{ color: "var(--gz-text2)", textDecoration: "none" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "var(--gz-text2)"}>Home</Link>
           {" › "}
           <span style={{ color: "var(--gz-text)" }}>My Account</span>
         </div>
@@ -85,7 +85,7 @@ export default function MyAccountPage() {
 
           {/* Sidebar */}
           <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "14px", overflow: "hidden", position: "sticky", top: "88px" }}>
-            <div style={{ padding: "24px", background: "linear-gradient(135deg, #1e1e2a, #16161f)", borderBottom: "1px solid var(--gz-border2)" }}>
+            <div style={{ padding: "24px", background: "linear-gradient(135deg, var(--gz-surface2), var(--gz-surface))", borderBottom: "1px solid var(--gz-border2)" }}>
               <div style={{ width: "52px", height: "52px", borderRadius: "50%", background: "#f59e0b", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "1.1rem", color: "#0a0a0f", margin: "0 auto 12px" }}>
                 {initials(user && user.username)}
               </div>

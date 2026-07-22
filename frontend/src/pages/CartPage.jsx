@@ -19,7 +19,7 @@ export default function CartPage() {
       <div style={{ paddingTop: "80px", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ textAlign: "center", padding: "48px 24px" }}>
           <div style={{ width: "80px", height: "80px", borderRadius: "20px", background: "var(--gz-surface)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
-            <ShoppingBag size={36} color="#9090a8" />
+            <ShoppingBag size={36} color="var(--gz-text2)" />
           </div>
           <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "1.5rem", color: "var(--gz-text)", marginBottom: "10px" }}>Your cart is empty</h2>
           <p style={{ color: "var(--gz-text2)", marginBottom: "24px" }}>Start adding some awesome gadgets to your cart!</p>
@@ -40,7 +40,7 @@ export default function CartPage() {
 
         {/* Breadcrumb */}
         <div style={{ fontSize: "0.8rem", color: "var(--gz-text2)", marginBottom: "24px", display: "flex", gap: "6px" }}>
-          <Link to="/" style={{ color: "var(--gz-text2)", textDecoration: "none" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "#9090a8"}>Home</Link>
+          <Link to="/" style={{ color: "var(--gz-text2)", textDecoration: "none" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "var(--gz-text2)"}>Home</Link>
           <span>›</span>
           <span style={{ color: "var(--gz-text)" }}>Shopping Cart</span>
         </div>
@@ -72,7 +72,7 @@ export default function CartPage() {
                           <img src={item.image_url} alt={item.name} style={{ width: "72px", height: "72px", objectFit: "cover", borderRadius: "10px", border: "1px solid var(--gz-border)" }} />
                         </Link>
                         <div>
-                          <Link to={"/product/" + item.slug} style={{ fontWeight: "700", fontSize: "0.9rem", color: "var(--gz-text)", textDecoration: "none", display: "block", marginBottom: "4px" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "#f0f0f5"}>
+                          <Link to={"/product/" + item.slug} style={{ fontWeight: "700", fontSize: "0.9rem", color: "var(--gz-text)", textDecoration: "none", display: "block", marginBottom: "4px" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "var(--gz-text)"}>
                             {item.name}
                           </Link>
                           <span style={{ fontSize: "0.75rem", color: "var(--gz-text2)", textTransform: "capitalize" }}>{item.category_name}</span>
@@ -102,7 +102,7 @@ export default function CartPage() {
                       <span style={{ fontWeight: "700", color: "var(--gz-text)" }}>{formatPrice(item.price * item.quantity)}</span>
                     </td>
                     <td>
-                      <button onClick={() => removeItem(item.id)} style={{ background: "none", border: "none", color: "var(--gz-text2)", cursor: "pointer", padding: "6px", borderRadius: "6px" }} onMouseEnter={(e) => { e.currentTarget.style.color = "#ef4444"; e.currentTarget.style.background = "rgba(239,68,68,0.08)" }} onMouseLeave={(e) => { e.currentTarget.style.color = "#9090a8"; e.currentTarget.style.background = "none" }}>
+                      <button onClick={() => removeItem(item.id)} style={{ background: "none", border: "none", color: "var(--gz-text2)", cursor: "pointer", padding: "6px", borderRadius: "6px" }} onMouseEnter={(e) => { e.currentTarget.style.color = "#ef4444"; e.currentTarget.style.background = "rgba(239,68,68,0.08)" }} onMouseLeave={(e) => { e.currentTarget.style.color = "var(--gz-text2)"; e.currentTarget.style.background = "none" }}>
                         <Trash2 size={16} />
                       </button>
                     </td>
@@ -111,7 +111,7 @@ export default function CartPage() {
               </tbody>
             </table>
             <div style={{ padding: "16px 20px" }}>
-              <Link to="/shop" style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.85rem", color: "var(--gz-text2)", textDecoration: "none" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "#9090a8"}>
+              <Link to="/shop" style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.85rem", color: "var(--gz-text2)", textDecoration: "none" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "var(--gz-text2)"}>
                 ← Continue Shopping
               </Link>
             </div>
@@ -128,7 +128,7 @@ export default function CartPage() {
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.9rem" }}>
                 <span style={{ color: "var(--gz-text2)" }}>Shipping</span>
-                <span style={{ color: ship === 0 ? "#22c55e" : "#f0f0f5", fontWeight: "600" }}>{ship === 0 ? "Free" : formatPrice(ship)}</span>
+                <span style={{ color: ship === 0 ? "#22c55e" : "var(--gz-text)", fontWeight: "600" }}>{ship === 0 ? "Free" : formatPrice(ship)}</span>
               </div>
               {freeShippingLeft > 0 && (
                 <div style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: "8px", padding: "10px 12px", fontSize: "0.78rem", color: "#f59e0b" }}>

@@ -1,6 +1,7 @@
 ﻿import { Link } from "react-router-dom"
 import { Mail, Phone, Clock, Lock, Truck, Undo2 } from "lucide-react"
 import LogoMark, { LogoWordmark } from "../Logo.jsx"
+import { formatPrice } from "../../lib/store.js"
 
 const LINKS = {
   Shop:    [{ label: "Smartphones", path: "/shop?cat=smartphones" }, { label: "Laptops", path: "/shop?cat=laptops" }, { label: "Audio", path: "/shop?cat=audio" }, { label: "Cameras", path: "/shop?cat=cameras" }, { label: "Wearables", path: "/shop?cat=wearables" }, { label: "Accessories", path: "/shop?cat=accessories" }],
@@ -66,7 +67,7 @@ export default function Footer() {
           <p style={{ fontSize: "0.8rem", color: "var(--gz-text2)" }}>© 2026 GadgetZone. All rights reserved.</p>
           <div style={{ display: "flex", gap: "20px", fontSize: "0.8rem", color: "var(--gz-text2)", flexWrap: "wrap" }}>
             <span style={{ display: "flex", alignItems: "center", gap: "6px" }}><Lock size={13} color="#f59e0b" /> Secure Payments</span>
-            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}><Truck size={13} color="#f59e0b" /> Free Delivery over ৳5,000</span>
+            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}><Truck size={13} color="#f59e0b" /> Free Delivery over {formatPrice(5000)}</span>
             <span style={{ display: "flex", alignItems: "center", gap: "6px" }}><Undo2 size={13} color="#f59e0b" /> 7-Day Returns</span>
           </div>
         </div>

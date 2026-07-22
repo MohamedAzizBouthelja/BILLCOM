@@ -2,6 +2,8 @@
 // loaded client-side (order history + recently viewed ids). Groq is only used
 // downstream (see recommendBlurbs.js) to phrase a one-line "why" per product.
 
+import { formatPrice } from "./store.js"
+
 const PURCHASE_WEIGHT = 2
 const VIEW_WEIGHT = 1
 const PRICE_PROXIMITY_WEIGHT = 0.5
@@ -72,6 +74,6 @@ export function describeProfile(products, orders, recentlyViewedIds) {
 
   const parts = []
   if (topCategories.length > 0) parts.push(`Intérêts principaux : ${topCategories.join(", ")}.`)
-  if (profile.avgPrice) parts.push(`Budget moyen habituel : ~${Math.round(profile.avgPrice)} BDT.`)
+  if (profile.avgPrice) parts.push(`Budget moyen habituel : ~${formatPrice(profile.avgPrice)}.`)
   return parts.join(" ")
 }

@@ -110,9 +110,9 @@ export default function CheckoutPage() {
 
         {/* Breadcrumb */}
         <div style={{ fontSize: "0.8rem", color: "var(--gz-text2)", marginBottom: "24px", display: "flex", gap: "6px" }}>
-          <Link to="/" style={{ color: "var(--gz-text2)", textDecoration: "none" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "#9090a8"}>Home</Link>
+          <Link to="/" style={{ color: "var(--gz-text2)", textDecoration: "none" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "var(--gz-text2)"}>Home</Link>
           <span>›</span>
-          <Link to="/cart" style={{ color: "var(--gz-text2)", textDecoration: "none" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "#9090a8"}>Cart</Link>
+          <Link to="/cart" style={{ color: "var(--gz-text2)", textDecoration: "none" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "var(--gz-text2)"}>Cart</Link>
           <span>›</span>
           <span style={{ color: "var(--gz-text)" }}>Checkout</span>
         </div>
@@ -193,8 +193,8 @@ export default function CheckoutPage() {
                   {PAYMENT_METHODS.map((m) => (
                     <label key={m.id} className={"pay-option" + (form.payment === m.id ? " selected" : "")} style={{ cursor: "pointer" }}>
                       <input type="radio" name="payment" value={m.id} checked={form.payment === m.id} onChange={() => set("payment", m.id)} style={{ display: "none" }} />
-                      <m.icon size={18} color={form.payment === m.id ? "#f59e0b" : "#9090a8"} />
-                      <span style={{ fontWeight: "600", color: form.payment === m.id ? "#f59e0b" : "#f0f0f5", fontSize: "0.9rem" }}>{m.label}</span>
+                      <m.icon size={18} color={form.payment === m.id ? "#f59e0b" : "var(--gz-text2)"} />
+                      <span style={{ fontWeight: "600", color: form.payment === m.id ? "#f59e0b" : "var(--gz-text)", fontSize: "0.9rem" }}>{m.label}</span>
                       {form.payment === m.id && <span style={{ marginLeft: "auto", color: "#f59e0b" }}>✓</span>}
                     </label>
                   ))}
@@ -229,7 +229,7 @@ export default function CheckoutPage() {
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.875rem" }}>
                   <span style={{ color: "var(--gz-text2)" }}>Shipping</span>
-                  <span style={{ color: ship === 0 ? "#22c55e" : "#f0f0f5", fontWeight: "600" }}>{ship === 0 ? "Free" : formatPrice(ship)}</span>
+                  <span style={{ color: ship === 0 ? "#22c55e" : "var(--gz-text)", fontWeight: "600" }}>{ship === 0 ? "Free" : formatPrice(ship)}</span>
                 </div>
                 <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "10px", display: "flex", justifyContent: "space-between" }}>
                   <span style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", color: "var(--gz-text)" }}>Total</span>

@@ -1,147 +1,111 @@
-import { motion, AnimatePresence } from 'framer-motion'
-import { X, ShoppingBag, Trash2, Minus, Plus, LogIn } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
-import { useCartStore, useAuthStore } from '../../lib/store.js'
-import { formatCurrency } from '../../lib/utils.js'
-import { createOrder } from '../../lib/api.js'
-import Button from '../ui/Button.jsx'
-import { useState } from 'react'
+import { Link } from "react-router-dom"
+import { motion, AnimatePresence } from "framer-motion"
+import { X, ShoppingBag, Trash2, Minus, Plus } from "lucide-react"
+import { useCartStore, formatPrice } from "../../lib/store.js"
+import { useCartDrawerStore } from "../../lib/cartDrawerStore.js"
 
 export default function CartDrawer() {
-  const { items, showCart, closeCart, removeItem, updateQuantity, clearCart } = useCartStore()
-  const { token } = useAuthStore()
-  const navigate = useNavigate()
-  const [loading, setLoading] = useState(false)
+  const open = useCartDrawerStore((s) => s.open)
+  const hide = useCartDrawerStore((s) => s.hide)
+  const { items, updateQty, removeItem, subtotal, shipping, total } = useCartStore()
 
-  const total = items.reduce((sum, i) => sum + Number(i.price) * i.quantity, 0)
-
-  const handleCheckout = async () => {
-    if (!token) {
-      closeCart()
-      navigate('/login')
-      return
-    }
-    setLoading(true)
-    try {
-      for (const item of items) {
-        await createOrder(item.id, item.quantity, token)
-      }
-      clearCart()
-      closeCart()
-      navigate('/dashboard')
-    } catch {
-      alert('Checkout failed. Please try again.')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const ship = shipping()
 
   return (
     <AnimatePresence>
-      {showCart && (
+      {open && (
         <>
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={closeCart}
-            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50"
+            transition={{ duration: 0.2 }}
+            onClick={hide}
+            style={{ position: "fixed", inset: 0, zIndex: 1300, background: "rgba(10,10,15,0.6)", backdropFilter: "blur(3px)" }}
           />
           <motion.aside
-            initial={{ x: '100%' }}
+            initial={{ x: "100%" }}
             animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed top-0 right-0 bottom-0 w-full max-w-md bg-white z-50 shadow-premium"
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 32, stiffness: 320 }}
+            style={{
+              position: "fixed", top: 0, right: 0, bottom: 0, zIndex: 1301,
+              width: "min(420px, 100vw)", background: "var(--gz-surface)",
+              borderLeft: "1px solid var(--gz-border)", boxShadow: "-24px 0 60px rgba(0,0,0,0.4)",
+              display: "flex", flexDirection: "column",
+            }}
           >
-            <div className="flex flex-col h-full">
-              <div className="flex items-center justify-between p-6 border-b border-gray-100">
-                <div>
-                  <div className="text-xs font-medium text-secondary uppercase tracking-wider">Shopping Cart</div>
-                  <h2 className="text-lg font-semibold text-primary mt-0.5">Your B2B Basket</h2>
-                </div>
-                <button onClick={closeCart} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                  <X size={18} />
-                </button>
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 22px", borderBottom: "1px solid var(--gz-border2)", flexShrink: 0 }}>
+              <div>
+                <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "1.1rem", color: "var(--gz-text)" }}>Your Cart</h2>
+                <span style={{ fontSize: "0.78rem", color: "var(--gz-text2)" }}>{items.length} item{items.length === 1 ? "" : "s"}</span>
               </div>
+              <button onClick={hide} aria-label="Close cart" className="gz-icon-btn" style={{ padding: "8px", borderRadius: "9px", background: "transparent", border: "none", cursor: "pointer" }}>
+                <X size={18} />
+              </button>
+            </div>
 
-              <div className="flex-1 overflow-y-auto p-6">
-                {items.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-center">
-                    <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mb-4">
-                      <ShoppingBag size={28} className="text-gray-300" />
-                    </div>
-                    <h3 className="text-sm font-semibold text-gray-900 mb-1">Your cart is empty</h3>
-                    <p className="text-sm text-gray-500 max-w-[200px]">
-                      Explore the catalog and add products to your procurement basket.
-                    </p>
+            {/* Items */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "16px 22px" }}>
+              {items.length === 0 ? (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", textAlign: "center", gap: "12px" }}>
+                  <ShoppingBag size={36} color="var(--gz-text2)" />
+                  <div>
+                    <h3 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", color: "var(--gz-text)", marginBottom: "6px" }}>Your cart is empty</h3>
+                    <p style={{ fontSize: "0.85rem", color: "var(--gz-text2)" }}>Start adding some awesome gadgets!</p>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {items.map((item) => (
-                      <motion.div
-                        key={item.id}
-                        layout
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        className="flex gap-4 p-3 bg-gray-50 rounded-xl"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
-                          <p className="text-xs text-gray-500 mt-0.5">{formatCurrency(item.price)} each</p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <button
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                              className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
-                            >
-                              <Minus size={12} />
+                  <Link to="/shop" onClick={hide} className="btn-primary" style={{ marginTop: "8px" }}>Start Shopping</Link>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                  {items.map((item) => (
+                    <div key={item.id} style={{ display: "flex", gap: "12px" }}>
+                      <Link to={"/product/" + item.slug} onClick={hide} style={{ flexShrink: 0 }}>
+                        <img src={item.image_url} alt={item.name} style={{ width: "64px", height: "64px", objectFit: "cover", borderRadius: "10px", border: "1px solid var(--gz-border)" }} />
+                      </Link>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <Link to={"/product/" + item.slug} onClick={hide} style={{ textDecoration: "none" }}>
+                          <div style={{ fontSize: "0.85rem", fontWeight: "700", color: "var(--gz-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginBottom: "4px" }}>{item.name}</div>
+                        </Link>
+                        <div style={{ fontSize: "0.8rem", color: "#f59e0b", fontWeight: "700", marginBottom: "8px" }}>{formatPrice(item.price)}</div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <div style={{ display: "flex", alignItems: "center", border: "1px solid var(--gz-border)", borderRadius: "8px" }}>
+                            <button onClick={() => updateQty(item.id, item.quantity - 1)} style={{ width: "26px", height: "26px", background: "none", border: "none", color: "var(--gz-text2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                              <Minus size={11} />
                             </button>
-                            <span className="text-sm font-medium w-6 text-center">{item.quantity}</span>
-                            <button
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                              className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
-                            >
-                              <Plus size={12} />
+                            <span style={{ width: "24px", textAlign: "center", fontSize: "0.8rem", fontWeight: "700", color: "var(--gz-text)" }}>{item.quantity}</span>
+                            <button onClick={() => updateQty(item.id, item.quantity + 1)} style={{ width: "26px", height: "26px", background: "none", border: "none", color: "var(--gz-text2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                              <Plus size={11} />
                             </button>
                           </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-semibold text-gray-900">
-                            {formatCurrency(Number(item.price) * item.quantity)}
-                          </p>
-                          <button
-                            onClick={() => removeItem(item.id)}
-                            className="mt-2 text-xs text-red-400 hover:text-red-600 transition-colors"
-                          >
+                          <button onClick={() => removeItem(item.id)} aria-label={`Remove ${item.name}`} style={{ background: "none", border: "none", color: "var(--gz-text2)", cursor: "pointer", padding: "4px", marginLeft: "auto" }} onMouseEnter={(e) => e.currentTarget.style.color = "#ef4444"} onMouseLeave={(e) => e.currentTarget.style.color = "var(--gz-text2)"}>
                             <Trash2 size={14} />
                           </button>
                         </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {items.length > 0 && (
-                <div className="border-t border-gray-100 p-6 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Total</span>
-                    <span className="text-lg font-bold text-primary">{formatCurrency(total)}</span>
-                  </div>
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    className="w-full"
-                    onClick={handleCheckout}
-                    disabled={loading}
-                    icon={!token ? <LogIn size={16} /> : null}
-                  >
-                    {loading ? 'Processing...' : token ? 'Secure Checkout' : 'Login to Checkout'}
-                  </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
+
+            {/* Footer */}
+            {items.length > 0 && (
+              <div style={{ padding: "18px 22px", borderTop: "1px solid var(--gz-border2)", flexShrink: 0 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", color: "var(--gz-text2)", marginBottom: "6px" }}>
+                  <span>Subtotal</span><span>{formatPrice(subtotal())}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", color: "var(--gz-text2)", marginBottom: "12px" }}>
+                  <span>Shipping</span><span style={{ color: ship === 0 ? "#22c55e" : "var(--gz-text)" }}>{ship === 0 ? "Free" : formatPrice(ship)}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontWeight: "800", fontSize: "1rem", color: "var(--gz-text)", marginBottom: "16px" }}>
+                  <span>Total</span><span style={{ color: "#f59e0b" }}>{formatPrice(total())}</span>
+                </div>
+                <Link to="/checkout" onClick={hide} className="btn-primary" style={{ width: "100%", justifyContent: "center", marginBottom: "10px" }}>Checkout</Link>
+                <Link to="/cart" onClick={hide} className="gz-text-link" style={{ display: "block", textAlign: "center", fontSize: "0.82rem", fontWeight: "600" }}>View full cart</Link>
+              </div>
+            )}
           </motion.aside>
         </>
       )}

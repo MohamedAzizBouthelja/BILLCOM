@@ -1,11 +1,12 @@
 ﻿import { Link } from "react-router-dom"
 import { Smartphone } from "lucide-react"
-import { CATEGORIES, SAMPLE_PRODUCTS } from "../../lib/store.js"
+import { CATEGORIES, useProductStore } from "../../lib/store.js"
 import { CATEGORY_ICONS } from "../../lib/categoryIcons.js"
 import { useScrollReveal } from "../../hooks/useScrollReveal.js"
 
 export default function CategoryGrid() {
-  const countFor = (slug) => SAMPLE_PRODUCTS.filter((p) => p.category === slug).length
+  const products = useProductStore((s) => s.products)
+  const countFor = (slug) => products.filter((p) => p.category === slug).length
   const [ref, isVisible] = useScrollReveal(0.15)
 
   return (
@@ -14,9 +15,9 @@ export default function CategoryGrid() {
         <div className={`reveal-up${isVisible ? " is-visible" : ""}`} style={{ textAlign: "center", marginBottom: "48px" }}>
           <div className="section-label">Shop by Category</div>
           <h2 className="section-title">Browse Our Collections</h2>
-          <p className="section-subtitle">Six curated categories, hand-picked so you find the right gadget faster.</p>
+          <p className="section-subtitle">{CATEGORIES.length} curated categories, hand-picked so you find the right gadget faster.</p>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px,1fr))", gap: "16px" }}>
+        <div className="cat-grid">
           {CATEGORIES.map((cat, i) => {
             const Icon = CATEGORY_ICONS[cat.slug] || Smartphone
             return (

@@ -3,6 +3,7 @@ import { useSearchParams, Link } from "react-router-dom"
 import { CheckCircle, Package, Home, Loader } from "lucide-react"
 import { useAuthStore } from "../lib/store.js"
 import OrderTimeline from "../components/OrderTimeline.jsx"
+import ConfettiBurst from "../components/ConfettiBurst.jsx"
 
 const ORDER_SERVICE = ""
 
@@ -48,6 +49,7 @@ export default function OrderSuccessPage() {
 
   return (
     <div style={{ paddingTop: "80px", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      {paid && <ConfettiBurst />}
       <div style={{ textAlign: "center", maxWidth: "480px", padding: "40px 24px" }}>
         <div style={{ width: "80px", height: "80px", borderRadius: "50%", background: paid ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px" }}>
           <CheckCircle size={44} color={paid ? "#22c55e" : "#ef4444"} />

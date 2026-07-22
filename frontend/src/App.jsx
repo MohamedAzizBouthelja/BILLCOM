@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage.jsx'
 import ShopPage from './pages/ShopPage.jsx'
 import ProductPage from './pages/ProductPage.jsx'
 import CartPage from './pages/CartPage.jsx'
+import WishlistPage from './pages/WishlistPage.jsx'
 import CheckoutPage from './pages/CheckoutPage.jsx'
 import OrderSuccessPage from './pages/OrderSuccessPage.jsx'
 import MyAccountPage from './pages/MyAccountPage.jsx'
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="/shop" element={<ShopPage />} />
         <Route path="/product/:slug" element={<ProductPage />} />
         <Route path="/cart" element={<CartPage />} />
+        <Route path="/wishlist" element={<WishlistPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/order-success" element={<OrderSuccessPage />} />
         <Route path="/account" element={<MyAccountPage />} />

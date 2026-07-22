@@ -1,7 +1,8 @@
 ﻿import { Truck, RefreshCcw, Shield, Headphones, Lock } from "lucide-react"
+import { formatPrice } from "../../lib/store.js"
 
 const FEATURES = [
-  { icon: Truck,       title: "Free Delivery",   sub: "On orders over ৳5,000" },
+  { icon: Truck,       title: "Free Delivery",   sub: `On orders over ${formatPrice(5000)}` },
   { icon: RefreshCcw,  title: "7-Day Returns",   sub: "Hassle-free returns" },
   { icon: Shield,      title: "2-Year Warranty", sub: "On all products" },
   { icon: Headphones,  title: "24/7 Support",    sub: "Always here to help" },

@@ -1,8 +1,10 @@
-﻿import { useState, useEffect } from "react"
+﻿import { useState, useEffect, useRef } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
-import { ShoppingCart, Search, User, Menu, X, LogOut, LayoutDashboard, Shield, Sun, Moon, ChevronDown } from "lucide-react"
+import { ShoppingCart, Search, User, Menu, X, LogOut, LayoutDashboard, Shield, Sun, Moon, ChevronDown, Heart } from "lucide-react"
 import { useAuthStore, useCartStore, useProductStore, CATEGORIES, formatPrice } from "../../lib/store.js"
+import { useCartDrawerStore } from "../../lib/cartDrawerStore.js"
+import { useWishlistStore } from "../../lib/wishlistStore.js"
 import { CATEGORY_ICONS } from "../../lib/categoryIcons.js"
 import { useTheme } from "../../lib/ThemeContext.jsx"
 import LogoMark, { LogoWordmark } from "../Logo.jsx"
@@ -25,8 +27,22 @@ export default function Header() {
   const { user, logout, isLoggedIn } = useAuthStore()
   const { count } = useCartStore()
   const cartCount = count()
+  const showCartDrawer = useCartDrawerStore((s) => s.show)
+  const wishlistCount = useWishlistStore((s) => s.ids.length)
   const { theme, toggle } = useTheme()
   const { products } = useProductStore()
+
+  const [cartBump, setCartBump] = useState(false)
+  const prevCartCount = useRef(cartCount)
+  useEffect(() => {
+    if (cartCount > prevCartCount.current) {
+      setCartBump(true)
+      const t = setTimeout(() => setCartBump(false), 350)
+      prevCartCount.current = cartCount
+      return () => clearTimeout(t)
+    }
+    prevCartCount.current = cartCount
+  }, [cartCount])
 
   const suggestions = query.trim().length > 1
     ? products.filter((p) =>
@@ -141,8 +157,9 @@ export default function Header() {
           <div className="flex items-center gap-2">
             {/* Theme toggle */}
             <button
-              onClick={toggle}
+              onClick={(e) => toggle(e.clientX, e.clientY)}
               title={theme === 'dark' ? 'Mode clair' : 'Mode sombre'}
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
               className="gz-icon-btn"
               style={{ padding: "9px", borderRadius: "9px", background: "transparent", border: "none", cursor: "pointer", overflow: "hidden", display: "flex" }}
             >
@@ -163,22 +180,47 @@ export default function Header() {
             {/* Search */}
             <button
               onClick={() => setSearchOpen((v) => !v)}
+              title="Search (Ctrl+K)"
+              aria-label={searchOpen ? "Close search" : "Open search (Ctrl+K)"}
               className="gz-icon-btn"
               style={{ padding: "9px", borderRadius: "9px", background: "transparent", border: "none", cursor: "pointer" }}
             >
               <Search size={20} />
             </button>
 
-            {/* Cart */}
+            {/* Wishlist */}
             <Link
-              id="gz-cart-icon"
-              to="/cart"
+              to="/wishlist"
+              aria-label={`Wishlist, ${wishlistCount} item${wishlistCount === 1 ? "" : "s"}`}
               className="gz-icon-btn"
               style={{ position: "relative", padding: "9px", borderRadius: "9px", display: "flex", alignItems: "center", textDecoration: "none" }}
             >
+              <Heart size={20} />
+              <span
+                style={{
+                  display: wishlistCount > 0 ? "flex" : "none",
+                  position: "absolute", top: "2px", right: "2px",
+                  width: "16px", height: "16px", borderRadius: "50%",
+                  background: "#f59e0b", color: "#0a0a0f",
+                  fontSize: "10px", fontWeight: "700",
+                  alignItems: "center", justifyContent: "center",
+                }}
+              >
+                {wishlistCount}
+              </span>
+            </Link>
+
+            {/* Cart */}
+            <button
+              id="gz-cart-icon"
+              onClick={showCartDrawer}
+              aria-label={`Cart, ${cartCount} item${cartCount === 1 ? "" : "s"}`}
+              className="gz-icon-btn"
+              style={{ position: "relative", padding: "9px", borderRadius: "9px", display: "flex", alignItems: "center", background: "transparent", border: "none", cursor: "pointer" }}
+            >
               <ShoppingCart size={20} />
               <span
-                className="cart-badge"
+                className={"cart-badge" + (cartBump ? " cart-badge-bump" : "")}
                 style={{
                   display: cartCount > 0 ? "flex" : "none",
                   position: "absolute", top: "2px", right: "2px",
@@ -190,7 +232,7 @@ export default function Header() {
               >
                 {cartCount}
               </span>
-            </Link>
+            </button>
 
             {/* Auth */}
             {isLoggedIn() ? (
@@ -246,6 +288,7 @@ export default function Header() {
             {/* Mobile hamburger */}
             <button
               onClick={() => setMobileOpen((v) => !v)}
+              aria-label={mobileOpen ? "Close menu" : "Open menu"}
               className="md:hidden"
               style={{ padding: "8px", borderRadius: "8px", color: "var(--gz-text2)", background: "transparent", border: "none", cursor: "pointer" }}
             >
@@ -257,7 +300,7 @@ export default function Header() {
 
       {/* Search bar */}
       {searchOpen && (
-        <div style={{ borderTop: "1px solid var(--gz-border2)", background: "rgba(10,10,15,0.98)", padding: "12px 24px" }}>
+        <div style={{ borderTop: "1px solid var(--gz-border2)", background: "color-mix(in srgb, var(--gz-bg) 98%, transparent)", padding: "12px 24px" }}>
           <form onSubmit={handleSearch} style={{ maxWidth: "600px", margin: "0 auto" }}>
             <div style={{ display: "flex", gap: "10px" }}>
               <input
@@ -294,7 +337,7 @@ export default function Header() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div style={{ borderTop: "1px solid var(--gz-border2)", background: "rgba(10,10,15,0.98)", padding: "16px" }}>
+        <div style={{ borderTop: "1px solid var(--gz-border2)", background: "color-mix(in srgb, var(--gz-bg) 98%, transparent)", padding: "16px" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
             {NAV.map((item) => (
               <Link

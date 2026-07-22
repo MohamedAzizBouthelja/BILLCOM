@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react"
 import { Send, X, Minus, Bot } from "lucide-react"
-import { SAMPLE_PRODUCTS, CATEGORIES } from "../lib/store.js"
+import { SAMPLE_PRODUCTS, CATEGORIES, formatPrice } from "../lib/store.js"
 
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY
 const GROQ_URL     = "https://api.groq.com/openai/v1/chat/completions"
@@ -8,7 +8,7 @@ const MODEL        = "llama-3.3-70b-versatile"
 
 function buildSystemPrompt() {
   const productLines = SAMPLE_PRODUCTS.map((p) =>
-    `- ${p.name} (${p.category_name}) : ${p.price} BDT${p.old_price ? ` (ancien prix : ${p.old_price} BDT)` : ""} | Stock : ${p.stock} | Note : ${p.rating}★ (${p.reviews} avis) | Badge : ${p.badge || "aucun"} | Description : ${p.description}`
+    `- ${p.name} (${p.category_name}) : ${formatPrice(p.price)}${p.old_price ? ` (ancien prix : ${formatPrice(p.old_price)})` : ""} | Stock : ${p.stock} | Note : ${p.rating}★ (${p.reviews} avis) | Badge : ${p.badge || "aucun"} | Description : ${p.description}`
   ).join("\n")
 
   const categoryLines = CATEGORIES.map((c) => {
@@ -24,8 +24,8 @@ Tu es sympathique, professionnel, et tu peux répondre à TOUTES les questions �
 - Nom : Billcom
 - Spécialité : Gadgets technologiques (smartphones, laptops, audio, cameras, wearables, accessoires)
 - Statistiques : 500+ produits, 50 000+ clients satisfaits, note moyenne 4.9★
-- Livraison gratuite pour toute commande supérieure à 5 000 BDT
-- Livraison standard : 150 BDT
+- Livraison gratuite pour toute commande supérieure à ${formatPrice(5000)}
+- Livraison standard : ${formatPrice(150)}
 
 === CATÉGORIES DISPONIBLES ===
 ${categoryLines}
@@ -153,6 +153,7 @@ export default function ChatBot() {
             e.currentTarget.style.boxShadow = "0 8px 32px rgba(245,158,11,0.25)"
           }}
           title="Assistant Billcom"
+          aria-label="Open Billcom assistant chat"
         >
           <span style={{
             width: "40px", height: "40px", borderRadius: "50%",
@@ -175,7 +176,7 @@ export default function ChatBot() {
             width: "360px",
             height: minimized ? "56px" : "520px",
             borderRadius: "20px",
-            background: "#16161f",
+            background: "var(--gz-surface)",
             border: "1px solid rgba(245,158,11,0.2)",
             boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
             display: "flex",
@@ -191,7 +192,7 @@ export default function ChatBot() {
             alignItems: "center",
             gap: "10px",
             padding: "12px 16px",
-            background: "linear-gradient(90deg, #1a1a2e, #16161f)",
+            background: "linear-gradient(90deg, var(--gz-surface2), var(--gz-surface))",
             borderBottom: minimized ? "none" : "1px solid rgba(245,158,11,0.15)",
             flexShrink: 0,
           }}>
@@ -203,16 +204,16 @@ export default function ChatBot() {
               <Bot size={18} color="#f59e0b" strokeWidth={1.8} />
             </span>
             <div style={{ flex: 1 }}>
-              <div style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", fontSize: "0.9rem", color: "#f0f0f5" }}>Assistant Billcom</div>
+              <div style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", fontSize: "0.9rem", color: "var(--gz-text)" }}>Assistant Billcom</div>
               <div style={{ fontSize: "0.7rem", color: "#4ade80", display: "flex", alignItems: "center", gap: "4px" }}>
                 <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#4ade80", display: "inline-block" }} />
                 En ligne
               </div>
             </div>
-            <button onClick={() => setMin(!minimized)} style={{ background: "none", border: "none", cursor: "pointer", color: "#9090a8", padding: "4px" }}>
+            <button onClick={() => setMin(!minimized)} aria-label={minimized ? "Expand chat" : "Minimize chat"} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gz-text2)", padding: "4px" }}>
               <Minus size={16} />
             </button>
-            <button onClick={() => setOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#9090a8", padding: "4px" }}>
+            <button onClick={() => setOpen(false)} aria-label="Close chat" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gz-text2)", padding: "4px" }}>
               <X size={16} />
             </button>
           </div>
@@ -229,8 +230,8 @@ export default function ChatBot() {
                       borderRadius: m.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
                       background: m.role === "user"
                         ? "linear-gradient(135deg, #f59e0b, #d97706)"
-                        : "rgba(255,255,255,0.06)",
-                      color: m.role === "user" ? "#0a0a0f" : "#e0e0f0",
+                        : "var(--gz-surface2)",
+                      color: m.role === "user" ? "#0a0a0f" : "var(--gz-text)",
                       fontSize: "0.85rem",
                       lineHeight: "1.5",
                       fontFamily: "Bricolage Grotesque, sans-serif",
@@ -244,7 +245,7 @@ export default function ChatBot() {
 
                 {loading && (
                   <div style={{ display: "flex", justifyContent: "flex-start" }}>
-                    <div style={{ padding: "10px 16px", borderRadius: "18px 18px 18px 4px", background: "rgba(255,255,255,0.06)" }}>
+                    <div style={{ padding: "10px 16px", borderRadius: "18px 18px 18px 4px", background: "var(--gz-surface2)" }}>
                       <span style={{ display: "flex", gap: "4px", alignItems: "center" }}>
                         {[0, 1, 2].map((i) => (
                           <span key={i} style={{
@@ -290,7 +291,7 @@ export default function ChatBot() {
                 display: "flex",
                 gap: "8px",
                 padding: "12px 16px",
-                borderTop: "1px solid rgba(255,255,255,0.07)",
+                borderTop: "1px solid var(--gz-border2)",
                 flexShrink: 0,
               }}>
                 <input
@@ -301,11 +302,11 @@ export default function ChatBot() {
                   placeholder="Posez votre question…"
                   style={{
                     flex: 1,
-                    background: "rgba(255,255,255,0.06)",
-                    border: "1px solid rgba(255,255,255,0.1)",
+                    background: "var(--gz-surface2)",
+                    border: "1px solid var(--gz-border)",
                     borderRadius: "12px",
                     padding: "10px 14px",
-                    color: "#f0f0f5",
+                    color: "var(--gz-text)",
                     fontSize: "0.85rem",
                     fontFamily: "Bricolage Grotesque, sans-serif",
                     outline: "none",

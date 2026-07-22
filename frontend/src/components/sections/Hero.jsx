@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 import { ShoppingCart, ArrowRight, Zap } from "lucide-react"
 import { motion, useInView } from "framer-motion"
 import ScrollProductCanvas from "../ScrollProductCanvas.jsx"
+import { useMagnetic } from "../../hooks/useMagnetic.js"
 
 function CountUp({ target, suffix = "", decimals = 0, duration = 1800 }) {
   const [count, setCount] = useState(0)
@@ -56,6 +57,8 @@ const wordVariants = {
 }
 
 export default function Hero() {
+  const shopBtn = useMagnetic()
+  const dealsBtn = useMagnetic()
   const titleWords = ["Your", "World."]
   const titleWordsAccent = ["Next-Level"]
   const titleWordsTech = ["Technology."]
@@ -169,10 +172,24 @@ export default function Hero() {
               custom={0.85}
               style={{ display: "flex", gap: "14px", flexWrap: "wrap", justifyContent: "center", marginBottom: "48px" }}
             >
-              <Link to="/shop" className="btn-primary" style={{ gap: "8px" }}>
+              <Link
+                ref={shopBtn.ref}
+                onMouseMove={shopBtn.onMouseMove}
+                onMouseLeave={shopBtn.onMouseLeave}
+                to="/shop"
+                className="btn-primary"
+                style={{ gap: "8px", transition: "transform 0.15s ease-out" }}
+              >
                 <ShoppingCart size={16} /> Shop Now
               </Link>
-              <Link to="/shop?badge=SALE" className="btn-outline" style={{ gap: "8px" }}>
+              <Link
+                ref={dealsBtn.ref}
+                onMouseMove={dealsBtn.onMouseMove}
+                onMouseLeave={dealsBtn.onMouseLeave}
+                to="/shop?badge=SALE"
+                className="btn-outline"
+                style={{ gap: "8px", transition: "transform 0.15s ease-out" }}
+              >
                 Explore Deals <ArrowRight size={15} />
               </Link>
             </motion.div>

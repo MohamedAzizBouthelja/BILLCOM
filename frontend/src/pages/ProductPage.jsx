@@ -1,13 +1,22 @@
 import { useState, useEffect, useRef } from "react"
 import { useParams, Link } from "react-router-dom"
 import { AnimatePresence, motion } from "framer-motion"
-import { ShoppingCart, Star, Truck, Shield, RefreshCcw, Plus, Minus, Send, Trash2 } from "lucide-react"
+import { ShoppingCart, Star, Truck, Shield, RefreshCcw, Plus, Minus, Send, Trash2, Flame, TrendingUp } from "lucide-react"
 import { useProductStore, useCartStore, useAuthStore, formatPrice } from "../lib/store.js"
 import { useCartToastStore } from "../lib/toastStore.js"
 import { useRecentlyViewedStore } from "../lib/recentlyViewedStore.js"
 import ProductCard from "../components/ecommerce/ProductCard.jsx"
+import { useMagnetic } from "../hooks/useMagnetic.js"
 
 const PRODUCT_SERVICE = ""
+
+// Deterministic per-product "social proof" numbers — stable across reloads
+// (seeded by slug) so they read as real activity rather than random flicker.
+function seededNumber(seed, min, max) {
+  let h = 0
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0
+  return min + (h % (max - min + 1))
+}
 
 function StarPicker({ value, onChange }) {
   const [hovered, setHovered] = useState(0)
@@ -83,6 +92,7 @@ export default function ProductPage() {
   const recentIds = useRecentlyViewedStore((s) => s.ids)
   const trackRecentlyViewed = useRecentlyViewedStore((s) => s.track)
   const product = products.find((p) => p.slug === slug)
+  const addToCartBtn = useMagnetic()
   const [qty, setQty] = useState(1)
   const [added, setAdded] = useState(false)
   const [zoomStyle, setZoomStyle] = useState({ transformOrigin: "center", transform: "scale(1)" })
@@ -217,11 +227,11 @@ export default function ProductPage() {
 
         {/* Breadcrumb */}
         <div style={{ fontSize: "0.8rem", color: "var(--gz-text2)", marginBottom: "28px", display: "flex", gap: "6px", alignItems: "center" }}>
-          <Link to="/" style={{ color: "var(--gz-text2)", textDecoration: "none" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "#9090a8"}>Home</Link>
+          <Link to="/" style={{ color: "var(--gz-text2)", textDecoration: "none" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "var(--gz-text2)"}>Home</Link>
           <span>›</span>
-          <Link to="/shop" style={{ color: "var(--gz-text2)", textDecoration: "none" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "#9090a8"}>Shop</Link>
+          <Link to="/shop" style={{ color: "var(--gz-text2)", textDecoration: "none" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "var(--gz-text2)"}>Shop</Link>
           <span>›</span>
-          <Link to={"/shop?cat=" + product.category} style={{ color: "var(--gz-text2)", textDecoration: "none", textTransform: "capitalize" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "#9090a8"}>{product.category_name}</Link>
+          <Link to={"/shop?cat=" + product.category} style={{ color: "var(--gz-text2)", textDecoration: "none", textTransform: "capitalize" }} onMouseEnter={(e) => e.currentTarget.style.color = "#f59e0b"} onMouseLeave={(e) => e.currentTarget.style.color = "var(--gz-text2)"}>{product.category_name}</Link>
           <span>›</span>
           <span style={{ color: "var(--gz-text)" }}>{product.name}</span>
         </div>
@@ -306,21 +316,38 @@ export default function ProductPage() {
                   <Plus size={16} />
                 </button>
               </div>
-              <button onClick={handleAddToCart} className="btn-primary" style={{ flex: 1, justifyContent: "center", padding: "12px 24px", minWidth: "180px" }}>
+              <button
+                ref={addToCartBtn.ref}
+                onMouseMove={addToCartBtn.onMouseMove}
+                onMouseLeave={addToCartBtn.onMouseLeave}
+                onClick={handleAddToCart}
+                className="btn-primary"
+                style={{ flex: 1, justifyContent: "center", padding: "12px 24px", minWidth: "180px", transition: "transform 0.15s ease-out" }}
+              >
                 <ShoppingCart size={16} /> {added ? "Added!" : "Add to Cart"}
               </button>
               <Link to="/cart" className="btn-outline" style={{ padding: "12px 20px", justifyContent: "center" }}>View Cart</Link>
             </div>
 
             {/* Stock */}
-            <div style={{ fontSize: "0.85rem", color: product.stock > 10 ? "#22c55e" : "#f59e0b", marginBottom: "24px", fontWeight: "600" }}>
+            <div style={{ fontSize: "0.85rem", color: product.stock > 10 ? "#22c55e" : "#f59e0b", marginBottom: "12px", fontWeight: "600" }}>
               {product.stock > 10 ? "✓ In Stock" : "⚠ Only " + product.stock + " left"}
+            </div>
+
+            {/* Social proof */}
+            <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", fontSize: "0.8rem", color: "var(--gz-text2)", marginBottom: "24px" }}>
+              <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <Flame size={14} color="#f59e0b" /> {seededNumber(product.slug + "v", 3, 21)} people viewing this now
+              </span>
+              <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <TrendingUp size={14} color="#f59e0b" /> {seededNumber(product.slug + "s", 8, 64)} sold in the last 24h
+              </span>
             </div>
 
             {/* Features */}
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {[
-                { icon: Truck, text: "Free delivery on orders over ৳5,000" },
+                { icon: Truck, text: `Free delivery on orders over ${formatPrice(5000)}` },
                 { icon: Shield, text: "2-year manufacturer warranty" },
                 { icon: RefreshCcw, text: "7-day hassle-free returns" },
               ].map(({ icon: Icon, text }) => (

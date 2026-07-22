@@ -8,6 +8,11 @@ import { flyToCart } from "../../lib/flyToCart.js"
 
 const LOW_STOCK_THRESHOLD = 10
 
+// Computed once — pointer type and motion preference don't change mid-session.
+const SUPPORTS_TILT = typeof window !== "undefined"
+  && window.matchMedia("(pointer: fine)").matches
+  && !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+
 export default function ProductCard({ product, blurb }) {
   const { addItem } = useCartStore()
   const showToast = useCartToastStore((s) => s.show)
@@ -34,14 +39,26 @@ export default function ProductCard({ product, blurb }) {
     ? Math.round((1 - product.price / product.old_price) * 100)
     : null
 
-  const handleSpotlight = (e) => {
+  const handleCardMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect()
-    e.currentTarget.style.setProperty("--gz-mx", (e.clientX - rect.left) + "px")
-    e.currentTarget.style.setProperty("--gz-my", (e.clientY - rect.top) + "px")
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    e.currentTarget.style.setProperty("--gz-mx", x + "px")
+    e.currentTarget.style.setProperty("--gz-my", y + "px")
+
+    if (!SUPPORTS_TILT) return
+    const px = x / rect.width - 0.5
+    const py = y / rect.height - 0.5
+    e.currentTarget.style.transform =
+      `translateY(-8px) perspective(800px) rotateX(${(-py * 8).toFixed(2)}deg) rotateY(${(px * 8).toFixed(2)}deg)`
+  }
+
+  const handleCardMouseLeave = (e) => {
+    if (SUPPORTS_TILT) e.currentTarget.style.transform = ""
   }
 
   return (
-    <div className="gz-card" onMouseMove={handleSpotlight} style={{ position: "relative", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+    <div className="gz-card" onMouseMove={handleCardMouseMove} onMouseLeave={handleCardMouseLeave} style={{ position: "relative", overflow: "hidden", display: "flex", flexDirection: "column" }}>
       {cornerBadge && (
         <span className={`gz-badge ${cornerBadge.className}`} style={{ position: "absolute", top: "10px", left: "10px", zIndex: 2 }}>
           {cornerBadge.text}
