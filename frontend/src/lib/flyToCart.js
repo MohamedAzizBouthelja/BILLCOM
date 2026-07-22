@@ -20,9 +20,10 @@ export function flyToCart(originEl) {
     ghost.style.opacity = "0.15"
   })
 
+  // The cart icon's own bump feedback is now driven reactively by the cart
+  // count itself (see Header.jsx's cartBump state) so it fires consistently
+  // from every add-to-cart path, not just this one — no need to bump it here.
   setTimeout(() => {
     ghost.remove()
-    target.classList.add("gz-cart-bump")
-    setTimeout(() => target.classList.remove("gz-cart-bump"), 350)
   }, 650)
 }
