@@ -8,7 +8,7 @@ import { flyToCart } from "../../lib/flyToCart.js"
 
 const LOW_STOCK_THRESHOLD = 10
 
-export default function ProductCard({ product }) {
+export default function ProductCard({ product, blurb }) {
   const { addItem } = useCartStore()
   const showToast = useCartToastStore((s) => s.show)
   const showQuickView = useQuickViewStore((s) => s.show)
@@ -86,6 +86,11 @@ export default function ProductCard({ product }) {
           <h3 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", fontSize: "0.95rem", letterSpacing: "-0.005em", color: "var(--gz-text)", marginBottom: "8px", lineHeight: "1.3", minHeight: "38px" }}>
             {product.name}
           </h3>
+          {blurb && (
+            <div style={{ fontSize: "0.72rem", color: "var(--gz-text2)", fontStyle: "italic", marginBottom: "8px" }}>
+              ✦ {blurb}
+            </div>
+          )}
           <div style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "10px" }}>
             <span className="stars">{"★".repeat(Math.round(product.rating))}</span>
             <span style={{ fontSize: "0.75rem", color: "var(--gz-text2)" }}>({product.reviews})</span>
