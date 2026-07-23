@@ -115,6 +115,30 @@ def health_check():
     return {"status": "healthy", "service": "order-service"}
 
 
+def _fetch_product(product_id: int) -> dict:
+    """Fetch a product from product-service. Raises HTTPException on any
+    failure — callers rely on this to price orders, so an unreachable
+    product-service must fail the order rather than silently trusting
+    client-supplied data (that's the vulnerability this closes)."""
+    try:
+        response = requests.get(
+            f"{PRODUCT_SERVICE_URL}/api/v1/products/{product_id}", timeout=3
+        )
+    except requests.exceptions.RequestException:
+        raise HTTPException(
+            status_code=502, detail="Impossible de vérifier le prix du produit"
+        )
+    if response.status_code == 404:
+        raise HTTPException(
+            status_code=400, detail=f"Produit {product_id} introuvable"
+        )
+    if response.status_code != 200:
+        raise HTTPException(
+            status_code=502, detail="Impossible de vérifier le prix du produit"
+        )
+    return response.json()
+
+
 @app.post(
     "/api/v1/orders", response_model=OrderResponse, status_code=status.HTTP_201_CREATED
 )
@@ -125,27 +149,34 @@ def create_order(
 ):
     username = payload.get("sub")
 
-    if order_data.product_id:
-        try:
-            response = requests.get(
-                f"{PRODUCT_SERVICE_URL}/api/v1/products/{order_data.product_id}",
-                timeout=3,
+    # Price integrity: never trust order_data.total_price from the client —
+    # recompute it from product-service's real prices/stock. Without this, a
+    # tampered request could set an arbitrary total for any order.
+    line_items = (
+        order_data.items
+        if isinstance(order_data.items, list) and order_data.items
+        else (
+            [{"id": order_data.product_id, "quantity": order_data.quantity or 1}]
+            if order_data.product_id
+            else []
+        )
+    )
+    if not line_items:
+        raise HTTPException(status_code=400, detail="Commande vide")
+
+    verified_total = 0.0
+    for item in line_items:
+        item_id = item.get("id") if isinstance(item, dict) else None
+        item_qty = (item.get("quantity") or 1) if isinstance(item, dict) else 1
+        if not item_id:
+            raise HTTPException(status_code=400, detail="Article de commande invalide")
+        product = _fetch_product(item_id)
+        if product.get("stock", 0) < item_qty:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Stock insuffisant pour {product.get('name', 'ce produit')}",
             )
-            if response.status_code == 404:
-                raise HTTPException(
-                    status_code=400, detail="Le produit spécifié n'existe pas"
-                )
-            if response.status_code == 200:
-                product = response.json()
-                if (
-                    order_data.quantity
-                    and product.get("stock", 0) < order_data.quantity
-                ):
-                    raise HTTPException(
-                        status_code=400, detail="Stock insuffisant pour ce produit"
-                    )
-        except requests.exceptions.RequestException:
-            pass
+        verified_total += product["price"] * item_qty
 
     new_order = Order(
         order_number=order_data.order_number,
@@ -153,7 +184,7 @@ def create_order(
         product_id=order_data.product_id,
         quantity=order_data.quantity,
         items_json=json.dumps(order_data.items) if order_data.items else None,
-        total_price=order_data.total_price,
+        total_price=verified_total,
         payment_method=order_data.payment_method,
         shipping_address=order_data.shipping_address,
         status="pending",
@@ -227,8 +258,9 @@ def get_all_orders(
 
 
 class StripeItem(BaseModel):
+    product_id: int
     name: str
-    price: float
+    price: float  # display fallback only — never used to compute the charge
     quantity: int
     image_url: Optional[str] = None
 
@@ -251,7 +283,21 @@ def create_stripe_checkout(
     username = payload.get("sub", "guest")
     order_number = "GZ-" + str(int(__import__("time").time() * 1000))
 
-    total_price = sum(item.price * item.quantity for item in data.items)
+    # Price integrity: re-fetch each product's real price/stock from
+    # product-service instead of trusting item.price — otherwise a tampered
+    # request could pay a fraction of the real cost via Stripe.
+    verified = []
+    total_price = 0.0
+    for item in data.items:
+        product = _fetch_product(item.product_id)
+        if product.get("stock", 0) < item.quantity:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Stock insuffisant pour {product.get('name', item.name)}",
+            )
+        verified.append({"product": product, "quantity": item.quantity, "image_url": item.image_url})
+        total_price += product["price"] * item.quantity
+
     new_order = Order(
         order_number=order_number,
         username=username,
@@ -265,22 +311,23 @@ def create_stripe_checkout(
     db.commit()
 
     line_items = []
-    for item in data.items:
+    for v in verified:
+        product = v["product"]
         line_items.append(
             {
                 "price_data": {
                     "currency": "usd",
                     "product_data": {
-                        "name": item.name,
+                        "name": product["name"],
                         **(
-                            {"images": [item.image_url]}
-                            if item.image_url and item.image_url.startswith("http")
+                            {"images": [v["image_url"]]}
+                            if v["image_url"] and v["image_url"].startswith("http")
                             else {}
                         ),
                     },
-                    "unit_amount": max(50, int(item.price)),
+                    "unit_amount": max(50, int(product["price"])),
                 },
-                "quantity": item.quantity,
+                "quantity": v["quantity"],
             }
         )
 

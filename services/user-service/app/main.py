@@ -18,7 +18,7 @@ from app.config import (
 )
 from app.database import engine, Base, get_db
 from app.models import User
-from app.schemas import UserCreate, UserResponse, UserLogin, Token
+from app.schemas import UserCreate, UserResponse, UserLogin, Token, UserRoleUpdate
 from app.auth import (
     get_password_hash,
     verify_password,
@@ -156,15 +156,16 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
         logger.warning(f"L'adresse email existe déjà: {user_data.email}")
         raise HTTPException(status_code=400, detail="Email déjà utilisé")
 
-    # Validation du rôle
-    role = user_data.role if user_data.role in ["user", "admin"] else "user"
-
+    # L'inscription publique crée toujours un compte "user" — le rôle n'est
+    # jamais pris depuis l'entrée client ici, sinon n'importe qui pourrait
+    # s'auto-promouvoir admin. La promotion passe par PATCH /users/{id}/role,
+    # réservé aux admins existants.
     hashed_password = get_password_hash(user_data.password)
     new_user = User(
         username=user_data.username,
         email=user_data.email,
         hashed_password=hashed_password,
-        role=role,
+        role="user",
     )
     db.add(new_user)
     db.commit()
@@ -278,6 +279,32 @@ def get_all_users(
     )
     users = db.query(User).all()
     return users
+
+
+@app.patch("/api/v1/users/{user_id}/role", response_model=UserResponse)
+def update_user_role(
+    user_id: int,
+    role_data: UserRoleUpdate,
+    db: Session = Depends(get_db),
+    payload: dict = Depends(require_role("admin")),
+):
+    if role_data.role not in ("user", "admin"):
+        raise HTTPException(status_code=400, detail="Rôle invalide")
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+
+    user.role = role_data.role
+    db.commit()
+    db.refresh(user)
+    logger.info(
+        "Administrateur %s a changé le rôle de %s en %s",
+        payload.get("sub"),
+        user.username,
+        user.role,
+    )
+    return user
 
 
 if __name__ == "__main__":

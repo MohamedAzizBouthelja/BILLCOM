@@ -69,7 +69,7 @@ export default function CheckoutPage() {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
           body: JSON.stringify({
-            items: items.map((i) => ({ name: i.name, price: i.price, quantity: i.quantity, image_url: i.image_url })),
+            items: items.map((i) => ({ product_id: i.id, name: i.name, price: i.price, quantity: i.quantity, image_url: i.image_url })),
             shipping_address: shippingAddress,
             payment_method: "card",
           }),

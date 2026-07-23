@@ -84,7 +84,7 @@ def test_create_order_product_not_found(mock_get):
 
     response = client.post("/api/v1/orders", json=payload, headers=headers)
     assert response.status_code == 400
-    assert response.json()["detail"] == "Le produit spécifié n'existe pas"
+    assert response.json()["detail"] == "Produit 99 introuvable"
 
 
 @patch("requests.get")
@@ -111,7 +111,7 @@ def test_create_order_insufficient_stock(mock_get):
 
     response = client.post("/api/v1/orders", json=payload, headers=headers)
     assert response.status_code == 400
-    assert response.json()["detail"] == "Stock insuffisant pour ce produit"
+    assert response.json()["detail"] == "Stock insuffisant pour Laptop"
 
 
 @patch("requests.get")
@@ -144,6 +144,33 @@ def test_create_order_success(mock_get):
     assert data["total_price"] == 2000.0
     assert data["username"] == "testuser"
     assert "id" in data
+
+
+@patch("requests.get")
+def test_create_order_ignores_tampered_total_price(mock_get):
+    # The client claims total_price=1.0 for a product that really costs 1000.0
+    # per unit — the server must recompute from product-service, not trust it.
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "id": 1,
+        "name": "Laptop",
+        "price": 1000.0,
+        "stock": 5,
+    }
+    mock_get.return_value = mock_response
+
+    token = generate_test_token("attacker", "user")
+    headers = {"Authorization": f"Bearer {token}"}
+    payload = {
+        "order_number": "GZ-TEST-TAMPER",
+        "items": [{"id": 1, "quantity": 2}],
+        "total_price": 1.0,
+    }
+
+    response = client.post("/api/v1/orders", json=payload, headers=headers)
+    assert response.status_code == 201
+    assert response.json()["total_price"] == 2000.0
 
 
 @patch("requests.get")
@@ -241,7 +268,7 @@ def test_create_stripe_checkout_not_configured():
     token = generate_test_token("buyer1", "user")
     headers = {"Authorization": f"Bearer {token}"}
     payload = {
-        "items": [{"name": "Laptop", "price": 1000.0, "quantity": 1}],
+        "items": [{"product_id": 1, "name": "Laptop", "price": 1000.0, "quantity": 1}],
         "shipping_address": "123 rue Test",
     }
     response = client.post(
@@ -251,18 +278,29 @@ def test_create_stripe_checkout_not_configured():
     assert response.json()["detail"] == "Stripe non configuré"
 
 
+@patch("requests.get")
 @patch("app.main.stripe.checkout.Session.create")
-def test_create_stripe_checkout_success(mock_create, monkeypatch):
+def test_create_stripe_checkout_success(mock_create, mock_get, monkeypatch):
     monkeypatch.setattr("app.main.STRIPE_SECRET_KEY", "sk_test_123")
     mock_session = MagicMock()
     mock_session.id = "cs_test_123"
     mock_session.url = "https://checkout.stripe.com/pay/cs_test_123"
     mock_create.return_value = mock_session
 
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "id": 1,
+        "name": "Laptop",
+        "price": 1000.0,
+        "stock": 5,
+    }
+    mock_get.return_value = mock_response
+
     token = generate_test_token("buyer2", "user")
     headers = {"Authorization": f"Bearer {token}"}
     payload = {
-        "items": [{"name": "Laptop", "price": 1000.0, "quantity": 1}],
+        "items": [{"product_id": 1, "name": "Laptop", "price": 1000.0, "quantity": 1}],
         "shipping_address": "123 rue Test",
     }
     response = client.post(
@@ -275,6 +313,42 @@ def test_create_stripe_checkout_success(mock_create, monkeypatch):
     assert data["order_number"].startswith("GZ-")
 
 
+@patch("requests.get")
+@patch("app.main.stripe.checkout.Session.create")
+def test_create_stripe_checkout_ignores_tampered_price(mock_create, mock_get, monkeypatch):
+    # Client claims price=1.0 for a product that really costs 1000.0 — the
+    # amount actually sent to Stripe must come from product-service instead.
+    monkeypatch.setattr("app.main.STRIPE_SECRET_KEY", "sk_test_123")
+    mock_session = MagicMock()
+    mock_session.id = "cs_test_tamper"
+    mock_session.url = "https://checkout.stripe.com/pay/cs_test_tamper"
+    mock_create.return_value = mock_session
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "id": 1,
+        "name": "Laptop",
+        "price": 1000.0,
+        "stock": 5,
+    }
+    mock_get.return_value = mock_response
+
+    token = generate_test_token("attacker", "user")
+    headers = {"Authorization": f"Bearer {token}"}
+    payload = {
+        "items": [{"product_id": 1, "name": "Laptop", "price": 1.0, "quantity": 1}],
+        "shipping_address": "123 rue Test",
+    }
+    response = client.post(
+        "/api/v1/orders/stripe/checkout", json=payload, headers=headers
+    )
+    assert response.status_code == 200
+
+    line_items = mock_create.call_args.kwargs["line_items"]
+    assert line_items[0]["price_data"]["unit_amount"] == 1000
+
+
 def test_verify_stripe_payment_not_configured():
     token = generate_test_token("buyer1", "user")
     headers = {"Authorization": f"Bearer {token}"}
@@ -282,10 +356,11 @@ def test_verify_stripe_payment_not_configured():
     assert response.status_code == 503
 
 
+@patch("requests.get")
 @patch("app.main.stripe.checkout.Session.retrieve")
 @patch("app.main.stripe.checkout.Session.create")
 def test_verify_stripe_payment_paid_updates_order(
-    mock_create, mock_retrieve, monkeypatch
+    mock_create, mock_retrieve, mock_get, monkeypatch
 ):
     monkeypatch.setattr("app.main.STRIPE_SECRET_KEY", "sk_test_123")
     mock_session = MagicMock()
@@ -293,12 +368,22 @@ def test_verify_stripe_payment_paid_updates_order(
     mock_session.url = "https://checkout.stripe.com/pay/cs_test_456"
     mock_create.return_value = mock_session
 
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "id": 2,
+        "name": "Phone",
+        "price": 500.0,
+        "stock": 10,
+    }
+    mock_get.return_value = mock_response
+
     token = generate_test_token("buyer3", "user")
     headers = {"Authorization": f"Bearer {token}"}
     checkout_res = client.post(
         "/api/v1/orders/stripe/checkout",
         json={
-            "items": [{"name": "Phone", "price": 500.0, "quantity": 1}],
+            "items": [{"product_id": 2, "name": "Phone", "price": 500.0, "quantity": 1}],
             "shipping_address": "1 rue Test",
         },
         headers=headers,
