@@ -107,7 +107,7 @@ export default function ShopPage() {
           {cat && cat !== "all" && <><span>›</span><span style={{ color: "#f59e0b", textTransform: "capitalize" }}>{cat}</span></>}
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: "28px", alignItems: "start" }}>
+        <div className="gz-grid-sidebar" style={{ gap: "28px", alignItems: "start" }}>
 
           {/* Sidebar */}
           <aside style={{

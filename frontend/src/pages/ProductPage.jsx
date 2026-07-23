@@ -88,7 +88,7 @@ function ProductDetailSkeleton() {
     <div style={{ paddingTop: "80px", minHeight: "100vh" }}>
       <div className="gz-container" style={{ paddingTop: "32px", paddingBottom: "64px" }}>
         <div className="skeleton" style={{ height: "14px", width: "260px", marginBottom: "28px" }} />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "48px" }}>
+        <div className="gz-grid-2col" style={{ gap: "48px" }}>
           <div className="skeleton" style={{ aspectRatio: "1", borderRadius: "20px" }} />
           <div>
             <div className="skeleton" style={{ height: "12px", width: "30%", marginBottom: "16px" }} />
@@ -264,7 +264,7 @@ export default function ProductPage() {
         </div>
 
         {/* Main grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "48px", marginBottom: "64px" }}>
+        <div className="gz-grid-2col" style={{ gap: "48px", marginBottom: "64px" }}>
 
           {/* Image */}
           <div>
@@ -398,7 +398,7 @@ export default function ProductPage() {
             </span>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "40px", alignItems: "start" }}>
+          <div className="gz-grid-2col" style={{ gap: "40px", alignItems: "start" }}>
 
             {/* Left: list of reviews */}
             <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "16px", padding: "24px" }}>

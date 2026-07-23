@@ -592,6 +592,26 @@ input[type="range"] { accent-color: #f59e0b; }
   top: 16px;
 }
 
+/* ── Responsive structural grids — desktop pixel widths are untouched above
+   the breakpoint; below it every one of these collapses to a single stacked
+   column instead of overflowing/crushing (sidebar+content, table+summary,
+   side-by-side pairs). Only the column count changes, never gap/alignment,
+   which stay as per-instance inline styles. ── */
+.gz-grid-sidebar       { display: grid; grid-template-columns: 260px 1fr; }
+.gz-grid-sidebar-admin { display: grid; grid-template-columns: 220px 1fr; }
+.gz-grid-cart          { display: grid; grid-template-columns: 1fr 360px; }
+.gz-grid-checkout      { display: grid; grid-template-columns: 1fr 380px; }
+.gz-grid-2col          { display: grid; grid-template-columns: 1fr 1fr; }
+
+@media (max-width: 860px) {
+  .gz-grid-sidebar, .gz-grid-sidebar-admin, .gz-grid-cart, .gz-grid-checkout {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 640px) {
+  .gz-grid-2col { grid-template-columns: 1fr; }
+}
+
 /* ── Category grid — fixed column count so the last row stays full instead of
    wrapping a lone orphan card (auto-fit reflows unevenly once the count isn't
    a clean multiple of the row width). 8 categories today divides evenly by

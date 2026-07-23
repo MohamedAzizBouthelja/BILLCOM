@@ -43,7 +43,7 @@ export default function RegisterPage() {
           )}
 
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+            <div className="gz-grid-2col" style={{ gap: "12px" }}>
               {[{ k: "first_name", label: "First Name *", ph: "John" }, { k: "last_name", label: "Last Name", ph: "Doe" }].map(({ k, label, ph }) => (
                 <div key={k}>
                   <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--gz-text2)", marginBottom: "6px" }}>{label}</label>

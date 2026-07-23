@@ -16,7 +16,7 @@ function CartSkeleton() {
       <div className="gz-container" style={{ paddingTop: "32px", paddingBottom: "32px" }}>
         <div className="skeleton" style={{ height: "14px", width: "180px", marginBottom: "24px" }} />
         <div className="skeleton" style={{ height: "28px", width: "260px", marginBottom: "28px" }} />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: "24px" }}>
+        <div className="gz-grid-cart" style={{ gap: "24px" }}>
           <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "14px", padding: "20px" }}>
             {[0, 1, 2].map((i) => (
               <div key={i} style={{ display: "flex", gap: "14px", padding: "14px 0" }}>
@@ -80,7 +80,7 @@ export default function CartPage() {
           Shopping Cart <span style={{ color: "var(--gz-text2)", fontSize: "1rem", fontWeight: "500" }}>({cartCount} items)</span>
         </h1>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: "24px", alignItems: "start" }}>
+        <div className="gz-grid-cart" style={{ gap: "24px", alignItems: "start" }}>
 
           {/* Cart table */}
           <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "14px", overflow: "hidden" }}>

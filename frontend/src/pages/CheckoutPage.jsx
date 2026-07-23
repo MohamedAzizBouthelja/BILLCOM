@@ -124,7 +124,7 @@ export default function CheckoutPage() {
         )}
 
         <form onSubmit={handleSubmit}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: "24px", alignItems: "start" }}>
+          <div className="gz-grid-checkout" style={{ gap: "24px", alignItems: "start" }}>
 
             {/* Form sections */}
             <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -135,7 +135,7 @@ export default function CheckoutPage() {
                   <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "#f59e0b", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "0.9rem", color: "#0a0a0f", flexShrink: 0 }}>1</div>
                   <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", fontSize: "1.1rem", color: "var(--gz-text)" }}>Contact Information</h2>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+                <div className="gz-grid-2col" style={{ gap: "14px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--gz-text2)", marginBottom: "6px" }}>First Name *</label>
                     <input value={form.first_name} onChange={(e) => set("first_name", e.target.value)} style={inputStyle} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "var(--gz-border)"} />
@@ -166,7 +166,7 @@ export default function CheckoutPage() {
                     <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--gz-text2)", marginBottom: "6px" }}>Street Address *</label>
                     <input value={form.address} onChange={(e) => set("address", e.target.value)} style={inputStyle} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "var(--gz-border)"} />
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+                  <div className="gz-grid-2col" style={{ gap: "14px" }}>
                     <div>
                       <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--gz-text2)", marginBottom: "6px" }}>City *</label>
                       <input value={form.city} onChange={(e) => set("city", e.target.value)} style={inputStyle} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "var(--gz-border)"} />

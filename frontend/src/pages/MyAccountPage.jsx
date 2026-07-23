@@ -81,7 +81,7 @@ export default function MyAccountPage() {
           <span style={{ color: "var(--gz-text)" }}>My Account</span>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: "24px", alignItems: "start" }}>
+        <div className="gz-grid-sidebar" style={{ gap: "24px", alignItems: "start" }}>
 
           {/* Sidebar */}
           <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "14px", overflow: "hidden", position: "sticky", top: "88px" }}>
@@ -231,7 +231,7 @@ export default function MyAccountPage() {
                 <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "1.5rem", color: "var(--gz-text)", marginBottom: "24px" }}>Profile Settings</h2>
                 {msg && <div style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: "10px", padding: "12px 16px", marginBottom: "16px", color: "#4ade80", fontSize: "0.875rem" }}>{msg}</div>}
                 <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "14px", padding: "28px" }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "14px" }}>
+                  <div className="gz-grid-2col" style={{ gap: "14px", marginBottom: "14px" }}>
                     <div>
                       <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--gz-text2)", marginBottom: "6px" }}>First Name</label>
                       <input value={profile.first_name} onChange={(e) => setProfile((p) => ({ ...p, first_name: e.target.value }))} style={inputStyle} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "var(--gz-border)"} />
@@ -246,7 +246,7 @@ export default function MyAccountPage() {
                     <input value={user && user.email} readOnly style={{ ...inputStyle, opacity: 0.5, cursor: "not-allowed" }} />
                     <p style={{ fontSize: "0.72rem", color: "var(--gz-text2)", marginTop: "4px" }}>Email cannot be changed.</p>
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "14px" }}>
+                  <div className="gz-grid-2col" style={{ gap: "14px", marginBottom: "14px" }}>
                     <div>
                       <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--gz-text2)", marginBottom: "6px" }}>Phone</label>
                       <input value={profile.phone} onChange={(e) => setProfile((p) => ({ ...p, phone: e.target.value }))} style={inputStyle} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "var(--gz-border)"} />

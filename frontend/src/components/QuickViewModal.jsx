@@ -64,7 +64,7 @@ export default function QuickViewModal() {
               overflowY: "auto", boxShadow: "0 30px 80px rgba(0,0,0,0.5)",
             }}
           >
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0" }}>
+            <div className="gz-grid-2col">
 
               {/* Image */}
               <div style={{ position: "relative" }}>

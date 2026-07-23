@@ -36,7 +36,7 @@ export default function AdminPage() {
           </Link>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: "24px", alignItems: "start" }}>
+        <div className="gz-grid-sidebar-admin" style={{ gap: "24px", alignItems: "start" }}>
 
           {/* Sidebar */}
           <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "14px", padding: "12px", position: "sticky", top: "88px" }}>
