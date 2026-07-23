@@ -83,9 +83,32 @@ function ReviewItem({ review, canDelete, onDelete }) {
   )
 }
 
+function ProductDetailSkeleton() {
+  return (
+    <div style={{ paddingTop: "80px", minHeight: "100vh" }}>
+      <div className="gz-container" style={{ paddingTop: "32px", paddingBottom: "64px" }}>
+        <div className="skeleton" style={{ height: "14px", width: "260px", marginBottom: "28px" }} />
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "48px" }}>
+          <div className="skeleton" style={{ aspectRatio: "1", borderRadius: "20px" }} />
+          <div>
+            <div className="skeleton" style={{ height: "12px", width: "30%", marginBottom: "16px" }} />
+            <div className="skeleton" style={{ height: "28px", width: "80%", marginBottom: "20px" }} />
+            <div className="skeleton" style={{ height: "16px", width: "40%", marginBottom: "24px" }} />
+            <div className="skeleton" style={{ height: "36px", width: "50%", marginBottom: "28px" }} />
+            <div className="skeleton" style={{ height: "14px", width: "100%", marginBottom: "8px" }} />
+            <div className="skeleton" style={{ height: "14px", width: "90%", marginBottom: "8px" }} />
+            <div className="skeleton" style={{ height: "14px", width: "70%", marginBottom: "28px" }} />
+            <div className="skeleton" style={{ height: "48px", width: "100%" }} />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ProductPage() {
   const { slug } = useParams()
-  const { products } = useProductStore()
+  const { products, loading } = useProductStore()
   const { addItem } = useCartStore()
   const showToast = useCartToastStore((s) => s.show)
   const { token, user, isLoggedIn } = useAuthStore()
@@ -185,6 +208,10 @@ export default function ProductPage() {
     } catch {
       // ignore, review list stays unchanged
     }
+  }
+
+  if (!product && loading) {
+    return <ProductDetailSkeleton />
   }
 
   if (!product) {

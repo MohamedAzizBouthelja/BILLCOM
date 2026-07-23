@@ -102,7 +102,7 @@ export default function CheckoutPage() {
 
   const sub = subtotal(); const ship = shipping(); const tot = total()
 
-  const inputStyle = { width: "100%", padding: "12px 16px", background: "var(--gz-bg)", border: "1.5px solid rgba(255,255,255,0.1)", borderRadius: "10px", color: "var(--gz-text)", fontSize: "0.9rem", outline: "none", transition: "border-color 0.2s", fontFamily: "DM Sans, sans-serif" }
+  const inputStyle = { width: "100%", padding: "12px 16px", background: "var(--gz-bg)", border: "1.5px solid var(--gz-border)", borderRadius: "10px", color: "var(--gz-text)", fontSize: "0.9rem", outline: "none", transition: "border-color 0.2s", fontFamily: "DM Sans, sans-serif" }
 
   return (
     <div style={{ paddingTop: "80px", minHeight: "100vh" }}>
@@ -138,19 +138,19 @@ export default function CheckoutPage() {
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--gz-text2)", marginBottom: "6px" }}>First Name *</label>
-                    <input value={form.first_name} onChange={(e) => set("first_name", e.target.value)} style={inputStyle} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"} />
+                    <input value={form.first_name} onChange={(e) => set("first_name", e.target.value)} style={inputStyle} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "var(--gz-border)"} />
                   </div>
                   <div>
                     <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--gz-text2)", marginBottom: "6px" }}>Last Name *</label>
-                    <input value={form.last_name} onChange={(e) => set("last_name", e.target.value)} style={inputStyle} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"} />
+                    <input value={form.last_name} onChange={(e) => set("last_name", e.target.value)} style={inputStyle} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "var(--gz-border)"} />
                   </div>
                   <div>
                     <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--gz-text2)", marginBottom: "6px" }}>Email Address *</label>
-                    <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} style={inputStyle} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"} />
+                    <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} style={inputStyle} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "var(--gz-border)"} />
                   </div>
                   <div>
                     <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--gz-text2)", marginBottom: "6px" }}>Phone Number *</label>
-                    <input type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} style={inputStyle} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"} />
+                    <input type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} style={inputStyle} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "var(--gz-border)"} />
                   </div>
                 </div>
               </div>
@@ -164,12 +164,12 @@ export default function CheckoutPage() {
                 <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--gz-text2)", marginBottom: "6px" }}>Street Address *</label>
-                    <input value={form.address} onChange={(e) => set("address", e.target.value)} style={inputStyle} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"} />
+                    <input value={form.address} onChange={(e) => set("address", e.target.value)} style={inputStyle} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "var(--gz-border)"} />
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
                     <div>
                       <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--gz-text2)", marginBottom: "6px" }}>City *</label>
-                      <input value={form.city} onChange={(e) => set("city", e.target.value)} style={inputStyle} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"} />
+                      <input value={form.city} onChange={(e) => set("city", e.target.value)} style={inputStyle} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "var(--gz-border)"} />
                     </div>
                     <div>
                       <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--gz-text2)", marginBottom: "6px" }}>Country</label>
@@ -178,7 +178,7 @@ export default function CheckoutPage() {
                   </div>
                   <div>
                     <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--gz-text2)", marginBottom: "6px" }}>Order Notes (optional)</label>
-                    <textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={3} style={{ ...inputStyle, resize: "vertical" }} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"} placeholder="Any special instructions..." />
+                    <textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={3} style={{ ...inputStyle, resize: "vertical" }} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "var(--gz-border)"} placeholder="Any special instructions..." />
                   </div>
                 </div>
               </div>
@@ -222,7 +222,7 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
-              <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "14px", display: "flex", flexDirection: "column", gap: "10px", marginBottom: "18px" }}>
+              <div style={{ borderTop: "1px solid var(--gz-border2)", paddingTop: "14px", display: "flex", flexDirection: "column", gap: "10px", marginBottom: "18px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.875rem" }}>
                   <span style={{ color: "var(--gz-text2)" }}>Subtotal</span>
                   <span style={{ color: "var(--gz-text)", fontWeight: "600" }}>{formatPrice(sub)}</span>
@@ -231,7 +231,7 @@ export default function CheckoutPage() {
                   <span style={{ color: "var(--gz-text2)" }}>Shipping</span>
                   <span style={{ color: ship === 0 ? "#22c55e" : "var(--gz-text)", fontWeight: "600" }}>{ship === 0 ? "Free" : formatPrice(ship)}</span>
                 </div>
-                <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "10px", display: "flex", justifyContent: "space-between" }}>
+                <div style={{ borderTop: "1px solid var(--gz-border2)", paddingTop: "10px", display: "flex", justifyContent: "space-between" }}>
                   <span style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", color: "var(--gz-text)" }}>Total</span>
                   <span style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", color: "#f59e0b", fontSize: "1.15rem" }}>{formatPrice(tot)}</span>
                 </div>

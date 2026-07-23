@@ -188,27 +188,30 @@ export default function Header() {
               <Search size={20} />
             </button>
 
-            {/* Wishlist */}
-            <Link
-              to="/wishlist"
-              aria-label={`Wishlist, ${wishlistCount} item${wishlistCount === 1 ? "" : "s"}`}
-              className="gz-icon-btn"
-              style={{ position: "relative", padding: "9px", borderRadius: "9px", display: "flex", alignItems: "center", textDecoration: "none" }}
-            >
-              <Heart size={20} />
-              <span
-                style={{
-                  display: wishlistCount > 0 ? "flex" : "none",
-                  position: "absolute", top: "2px", right: "2px",
-                  width: "16px", height: "16px", borderRadius: "50%",
-                  background: "#f59e0b", color: "#0a0a0f",
-                  fontSize: "10px", fontWeight: "700",
-                  alignItems: "center", justifyContent: "center",
-                }}
+            {/* Wishlist — hidden below sm to keep the icon row from crowding
+                the logo on narrow phones; reachable via the mobile menu instead. */}
+            <div className="hidden sm:flex">
+              <Link
+                to="/wishlist"
+                aria-label={`Wishlist, ${wishlistCount} item${wishlistCount === 1 ? "" : "s"}`}
+                className="gz-icon-btn"
+                style={{ position: "relative", padding: "9px", borderRadius: "9px", display: "flex", alignItems: "center", textDecoration: "none" }}
               >
-                {wishlistCount}
-              </span>
-            </Link>
+                <Heart size={20} />
+                <span
+                  style={{
+                    display: wishlistCount > 0 ? "flex" : "none",
+                    position: "absolute", top: "2px", right: "2px",
+                    width: "16px", height: "16px", borderRadius: "50%",
+                    background: "#f59e0b", color: "#0a0a0f",
+                    fontSize: "10px", fontWeight: "700",
+                    alignItems: "center", justifyContent: "center",
+                  }}
+                >
+                  {wishlistCount}
+                </span>
+              </Link>
+            </div>
 
             {/* Cart */}
             <button
@@ -350,6 +353,14 @@ export default function Header() {
                 {item.label}
               </Link>
             ))}
+            <Link
+              to="/wishlist"
+              onClick={() => setMobileOpen(false)}
+              className="gz-nav-link"
+              style={{ padding: "12px 16px", borderRadius: "10px", fontSize: "0.9rem", fontWeight: "500", textDecoration: "none", display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <Heart size={16} /> Wishlist{wishlistCount > 0 ? ` (${wishlistCount})` : ""}
+            </Link>
             <div style={{ borderTop: "1px solid var(--gz-border2)", marginTop: "8px", paddingTop: "12px", display: "flex", flexDirection: "column", gap: "4px" }}>
               {isLoggedIn() ? (
                 <>

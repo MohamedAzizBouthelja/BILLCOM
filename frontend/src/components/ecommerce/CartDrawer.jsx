@@ -3,11 +3,13 @@ import { motion, AnimatePresence } from "framer-motion"
 import { X, ShoppingBag, Trash2, Minus, Plus } from "lucide-react"
 import { useCartStore, formatPrice } from "../../lib/store.js"
 import { useCartDrawerStore } from "../../lib/cartDrawerStore.js"
+import { useHydrated } from "../../hooks/useHydrated.js"
 
 export default function CartDrawer() {
   const open = useCartDrawerStore((s) => s.open)
   const hide = useCartDrawerStore((s) => s.hide)
   const { items, updateQty, removeItem, subtotal, shipping, total } = useCartStore()
+  const hydrated = useHydrated(useCartStore)
 
   const ship = shipping()
 
@@ -48,7 +50,19 @@ export default function CartDrawer() {
 
             {/* Items */}
             <div style={{ flex: 1, overflowY: "auto", padding: "16px 22px" }}>
-              {items.length === 0 ? (
+              {!hydrated ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                  {[0, 1].map((i) => (
+                    <div key={i} style={{ display: "flex", gap: "12px" }}>
+                      <div className="skeleton" style={{ width: "64px", height: "64px", borderRadius: "10px", flexShrink: 0 }} />
+                      <div style={{ flex: 1 }}>
+                        <div className="skeleton" style={{ height: "12px", width: "70%", marginBottom: "8px" }} />
+                        <div className="skeleton" style={{ height: "12px", width: "40%" }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : items.length === 0 ? (
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", textAlign: "center", gap: "12px" }}>
                   <ShoppingBag size={36} color="var(--gz-text2)" />
                   <div>

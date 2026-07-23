@@ -40,7 +40,7 @@ export default function LoginPage() {
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required
                 className="gz-input"
                 onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"}
-                onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"}
+                onBlur={(e) => e.currentTarget.style.borderColor = "var(--gz-border)"}
               />
             </div>
             <div>
@@ -48,7 +48,7 @@ export default function LoginPage() {
               <input type="password" value={password} onChange={(e) => setPwd(e.target.value)} placeholder="••••••••" required
                 className="gz-input"
                 onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"}
-                onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"}
+                onBlur={(e) => e.currentTarget.style.borderColor = "var(--gz-border)"}
               />
             </div>
             <button type="submit" disabled={loading} className="btn-primary" style={{ width: "100%", justifyContent: "center", padding: "13px", fontSize: "0.95rem", marginTop: "4px", opacity: loading ? 0.7 : 1 }}>

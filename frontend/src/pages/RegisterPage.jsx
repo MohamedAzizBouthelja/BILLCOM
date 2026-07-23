@@ -47,21 +47,21 @@ export default function RegisterPage() {
               {[{ k: "first_name", label: "First Name *", ph: "John" }, { k: "last_name", label: "Last Name", ph: "Doe" }].map(({ k, label, ph }) => (
                 <div key={k}>
                   <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--gz-text2)", marginBottom: "6px" }}>{label}</label>
-                  <input value={form[k]} onChange={set(k)} placeholder={ph} className="gz-input" onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"} />
+                  <input value={form[k]} onChange={set(k)} placeholder={ph} className="gz-input" onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "var(--gz-border)"} />
                 </div>
               ))}
             </div>
             <div>
               <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--gz-text2)", marginBottom: "6px" }}>Email Address *</label>
-              <input type="email" value={form.email} onChange={set("email")} placeholder="you@example.com" required className="gz-input" onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"} />
+              <input type="email" value={form.email} onChange={set("email")} placeholder="you@example.com" required className="gz-input" onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "var(--gz-border)"} />
             </div>
             <div>
               <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--gz-text2)", marginBottom: "6px" }}>Password * (min 6 chars)</label>
-              <input type="password" value={form.password} onChange={set("password")} placeholder="••••••••" required className="gz-input" onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"} />
+              <input type="password" value={form.password} onChange={set("password")} placeholder="••••••••" required className="gz-input" onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "var(--gz-border)"} />
             </div>
             <div>
               <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--gz-text2)", marginBottom: "6px" }}>Confirm Password *</label>
-              <input type="password" value={form.confirm} onChange={set("confirm")} placeholder="••••••••" required className="gz-input" onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"} />
+              <input type="password" value={form.confirm} onChange={set("confirm")} placeholder="••••••••" required className="gz-input" onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "var(--gz-border)"} />
             </div>
             <button type="submit" disabled={loading} className="btn-primary" style={{ width: "100%", justifyContent: "center", padding: "13px", fontSize: "0.95rem", marginTop: "4px", opacity: loading ? 0.7 : 1 }}>
               <Rocket size={16} /> {loading ? "Creating account..." : "Create Account"}

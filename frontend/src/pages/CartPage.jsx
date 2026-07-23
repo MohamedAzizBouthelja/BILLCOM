@@ -1,6 +1,7 @@
 ﻿import { Link, useNavigate } from "react-router-dom"
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, CreditCard, Smartphone, Wallet, Banknote, Lock } from "lucide-react"
 import { useCartStore, formatPrice } from "../lib/store.js"
+import { useHydrated } from "../hooks/useHydrated.js"
 
 const PAYMENT_ICONS = [
   { icon: CreditCard, label: "Card" },
@@ -9,10 +10,40 @@ const PAYMENT_ICONS = [
   { icon: Banknote, label: "COD" },
 ]
 
+function CartSkeleton() {
+  return (
+    <div style={{ paddingTop: "80px", minHeight: "100vh" }}>
+      <div className="gz-container" style={{ paddingTop: "32px", paddingBottom: "32px" }}>
+        <div className="skeleton" style={{ height: "14px", width: "180px", marginBottom: "24px" }} />
+        <div className="skeleton" style={{ height: "28px", width: "260px", marginBottom: "28px" }} />
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: "24px" }}>
+          <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "14px", padding: "20px" }}>
+            {[0, 1, 2].map((i) => (
+              <div key={i} style={{ display: "flex", gap: "14px", padding: "14px 0" }}>
+                <div className="skeleton" style={{ width: "72px", height: "72px", borderRadius: "10px", flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <div className="skeleton" style={{ height: "14px", width: "60%", marginBottom: "10px" }} />
+                  <div className="skeleton" style={{ height: "12px", width: "30%" }} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="skeleton" style={{ height: "220px", borderRadius: "14px" }} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function CartPage() {
   const { items, updateQty, removeItem, count, subtotal, shipping, total } = useCartStore()
   const navigate = useNavigate()
+  const hydrated = useHydrated(useCartStore)
   const cartCount = count()
+
+  if (!hydrated) {
+    return <CartSkeleton />
+  }
 
   if (cartCount === 0) {
     return (
@@ -83,7 +114,7 @@ export default function CartPage() {
                       <span style={{ fontWeight: "700", color: "#f59e0b" }}>{formatPrice(item.price)}</span>
                     </td>
                     <td>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid rgba(255,255,255,0.12)", borderRadius: "8px", overflow: "hidden", width: "fit-content", margin: "0 auto" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid var(--gz-border)", borderRadius: "8px", overflow: "hidden", width: "fit-content", margin: "0 auto" }}>
                         <button onClick={() => updateQty(item.id, item.quantity - 1)} style={{ width: "32px", height: "36px", background: "none", border: "none", color: "var(--gz-text2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           <Minus size={14} />
                         </button>
@@ -135,7 +166,7 @@ export default function CartPage() {
                   Add {formatPrice(freeShippingLeft)} more for free shipping!
                 </div>
               )}
-              <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "12px", display: "flex", justifyContent: "space-between" }}>
+              <div style={{ borderTop: "1px solid var(--gz-border2)", paddingTop: "12px", display: "flex", justifyContent: "space-between" }}>
                 <span style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", color: "var(--gz-text)", fontSize: "1rem" }}>Total</span>
                 <span style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", color: "#f59e0b", fontSize: "1.2rem" }}>{formatPrice(tot)}</span>
               </div>

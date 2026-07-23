@@ -69,7 +69,7 @@ export default function MyAccountPage() {
     { id: "password",  label: "Change Password",  icon: Lock },
   ]
 
-  const inputStyle = { width: "100%", padding: "11px 14px", background: "var(--gz-bg)", border: "1.5px solid rgba(255,255,255,0.1)", borderRadius: "10px", color: "var(--gz-text)", fontSize: "0.9rem", outline: "none", fontFamily: "DM Sans, sans-serif" }
+  const inputStyle = { width: "100%", padding: "11px 14px", background: "var(--gz-bg)", border: "1.5px solid var(--gz-border)", borderRadius: "10px", color: "var(--gz-text)", fontSize: "0.9rem", outline: "none", fontFamily: "DM Sans, sans-serif" }
 
   return (
     <div style={{ paddingTop: "80px", minHeight: "100vh" }}>
@@ -234,11 +234,11 @@ export default function MyAccountPage() {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "14px" }}>
                     <div>
                       <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--gz-text2)", marginBottom: "6px" }}>First Name</label>
-                      <input value={profile.first_name} onChange={(e) => setProfile((p) => ({ ...p, first_name: e.target.value }))} style={inputStyle} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"} />
+                      <input value={profile.first_name} onChange={(e) => setProfile((p) => ({ ...p, first_name: e.target.value }))} style={inputStyle} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "var(--gz-border)"} />
                     </div>
                     <div>
                       <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--gz-text2)", marginBottom: "6px" }}>Last Name</label>
-                      <input value={profile.last_name} onChange={(e) => setProfile((p) => ({ ...p, last_name: e.target.value }))} style={inputStyle} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"} />
+                      <input value={profile.last_name} onChange={(e) => setProfile((p) => ({ ...p, last_name: e.target.value }))} style={inputStyle} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "var(--gz-border)"} />
                     </div>
                   </div>
                   <div style={{ marginBottom: "14px" }}>
@@ -249,16 +249,16 @@ export default function MyAccountPage() {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "14px" }}>
                     <div>
                       <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--gz-text2)", marginBottom: "6px" }}>Phone</label>
-                      <input value={profile.phone} onChange={(e) => setProfile((p) => ({ ...p, phone: e.target.value }))} style={inputStyle} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"} />
+                      <input value={profile.phone} onChange={(e) => setProfile((p) => ({ ...p, phone: e.target.value }))} style={inputStyle} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "var(--gz-border)"} />
                     </div>
                     <div>
                       <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--gz-text2)", marginBottom: "6px" }}>City</label>
-                      <input value={profile.city} onChange={(e) => setProfile((p) => ({ ...p, city: e.target.value }))} style={inputStyle} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"} />
+                      <input value={profile.city} onChange={(e) => setProfile((p) => ({ ...p, city: e.target.value }))} style={inputStyle} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "var(--gz-border)"} />
                     </div>
                   </div>
                   <div style={{ marginBottom: "20px" }}>
                     <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--gz-text2)", marginBottom: "6px" }}>Address</label>
-                    <textarea value={profile.address} onChange={(e) => setProfile((p) => ({ ...p, address: e.target.value }))} rows={3} style={{ ...inputStyle, resize: "vertical" }} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"} />
+                    <textarea value={profile.address} onChange={(e) => setProfile((p) => ({ ...p, address: e.target.value }))} rows={3} style={{ ...inputStyle, resize: "vertical" }} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "var(--gz-border)"} />
                   </div>
                   <button onClick={() => setMsg("Profile saved successfully!")} className="btn-primary">Save Changes</button>
                 </div>
@@ -278,7 +278,7 @@ export default function MyAccountPage() {
                     ].map(({ label, key, placeholder }) => (
                       <div key={key}>
                         <label style={{ display: "block", fontSize: "0.8rem", fontWeight: "600", color: "var(--gz-text2)", marginBottom: "6px" }}>{label} *</label>
-                        <input type="password" placeholder={placeholder} value={pwForm[key]} onChange={(e) => setPwForm((p) => ({ ...p, [key]: e.target.value }))} style={inputStyle} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"} />
+                        <input type="password" placeholder={placeholder} value={pwForm[key]} onChange={(e) => setPwForm((p) => ({ ...p, [key]: e.target.value }))} style={inputStyle} onFocus={(e) => e.currentTarget.style.borderColor = "#f59e0b"} onBlur={(e) => e.currentTarget.style.borderColor = "var(--gz-border)"} />
                       </div>
                     ))}
                     <button onClick={() => { if (pwForm.next.length < 6) { setMsg("Password must be at least 6 characters"); return } if (pwForm.next !== pwForm.confirm) { setMsg("Passwords do not match"); return } setMsg("Password updated successfully!"); setPwForm({ current: "", next: "", confirm: "" }) }} className="btn-primary">

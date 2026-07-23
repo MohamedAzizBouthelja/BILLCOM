@@ -40,7 +40,7 @@ export default function DealOfDay() {
   if (!product) return null
 
   return (
-    <section style={{ padding: "72px 0", background: "var(--gz-surface)", borderTop: "1px solid rgba(255,255,255,0.05)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+    <section style={{ padding: "72px 0", background: "var(--gz-surface)", borderTop: "1px solid var(--gz-border2)", borderBottom: "1px solid var(--gz-border2)" }}>
       <div className="gz-container" ref={ref}>
         <div className={`reveal-up${isVisible ? " is-visible" : ""}`} style={{ textAlign: "center", marginBottom: "48px" }}>
           <div className="section-label">Limited Time</div>
