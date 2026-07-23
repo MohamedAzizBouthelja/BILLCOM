@@ -129,9 +129,7 @@ def _fetch_product(product_id: int) -> dict:
             status_code=502, detail="Impossible de vérifier le prix du produit"
         )
     if response.status_code == 404:
-        raise HTTPException(
-            status_code=400, detail=f"Produit {product_id} introuvable"
-        )
+        raise HTTPException(status_code=400, detail=f"Produit {product_id} introuvable")
     if response.status_code != 200:
         raise HTTPException(
             status_code=502, detail="Impossible de vérifier le prix du produit"
@@ -295,7 +293,9 @@ def create_stripe_checkout(
                 status_code=400,
                 detail=f"Stock insuffisant pour {product.get('name', item.name)}",
             )
-        verified.append({"product": product, "quantity": item.quantity, "image_url": item.image_url})
+        verified.append(
+            {"product": product, "quantity": item.quantity, "image_url": item.image_url}
+        )
         total_price += product["price"] * item.quantity
 
     new_order = Order(

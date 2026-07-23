@@ -315,7 +315,9 @@ def test_create_stripe_checkout_success(mock_create, mock_get, monkeypatch):
 
 @patch("requests.get")
 @patch("app.main.stripe.checkout.Session.create")
-def test_create_stripe_checkout_ignores_tampered_price(mock_create, mock_get, monkeypatch):
+def test_create_stripe_checkout_ignores_tampered_price(
+    mock_create, mock_get, monkeypatch
+):
     # Client claims price=1.0 for a product that really costs 1000.0 — the
     # amount actually sent to Stripe must come from product-service instead.
     monkeypatch.setattr("app.main.STRIPE_SECRET_KEY", "sk_test_123")
@@ -383,7 +385,9 @@ def test_verify_stripe_payment_paid_updates_order(
     checkout_res = client.post(
         "/api/v1/orders/stripe/checkout",
         json={
-            "items": [{"product_id": 2, "name": "Phone", "price": 500.0, "quantity": 1}],
+            "items": [
+                {"product_id": 2, "name": "Phone", "price": 500.0, "quantity": 1}
+            ],
             "shipping_address": "1 rue Test",
         },
         headers=headers,
