@@ -163,7 +163,19 @@ kubectl port-forward -n monitoring svc/prometheus-grafana 3000:80
 ```bash
 kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090
 ```
+# Alertmanager — état des alertes
+```bash 
+kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-alertmanager 9093:9093
+```
+### Terminal 4 — Port-forward vers le serveur ArgoCD
 
+```bash 
+kubectl port-forward -n argocd svc/argocd-server 8080:443  
+```
+### Récupérer le mot de passe admin initial : ---> Utilisateur : admin et Mot de passe : celui affiché à l'étape 2
+```bash
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+```
 ---
 
 ## ÉTAPE 10 — Accéder aux interfaces

@@ -3,7 +3,8 @@ FROM python:3.11-slim AS builder
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update -o Acquire::Retries=5 -o Acquire::http::Timeout=30 && \
+    apt-get install -y --no-install-recommends -o Acquire::Retries=5 -o Acquire::http::Timeout=30 \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
@@ -17,7 +18,11 @@ WORKDIR /app
 
 # Applique les derniers correctifs de sécurité Debian disponibles au moment du
 # build, indépendamment de la date de gel de l'image de base python:3.11-slim.
-RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
+# Retries/timeout : le réseau WSL2/minikube coupe parfois la résolution DNS de
+# deb.debian.org en plein téléchargement — évite d'échouer sur un blip transitoire.
+RUN apt-get update -o Acquire::Retries=5 -o Acquire::http::Timeout=30 && \
+    apt-get upgrade -y -o Acquire::Retries=5 -o Acquire::http::Timeout=30 && \
+    rm -rf /var/lib/apt/lists/*
 
 # Création d'un groupe et d'un utilisateur non-root pour la sécurité
 RUN groupadd -g 1000 appgroup && \
