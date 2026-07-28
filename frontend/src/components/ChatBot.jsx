@@ -1,20 +1,50 @@
 import { useState, useRef, useEffect } from "react"
 import { Send, X, Minus, Bot } from "lucide-react"
-import { SAMPLE_PRODUCTS, CATEGORIES, formatPrice } from "../lib/store.js"
+import { useProductStore, useOrderStore, useAuthStore, CATEGORIES, formatPrice } from "../lib/store.js"
+import { useRecentlyViewedStore } from "../lib/recentlyViewedStore.js"
+import { getRecommendations } from "../lib/recommend.js"
+import { retrieveKnowledge, retrieveProducts } from "../lib/chatKnowledge.js"
 
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY
 const GROQ_URL     = "https://api.groq.com/openai/v1/chat/completions"
 const MODEL        = "llama-3.3-70b-versatile"
 
-function buildSystemPrompt() {
-  const productLines = SAMPLE_PRODUCTS.map((p) =>
-    `- ${p.name} (${p.category_name}) : ${formatPrice(p.price)}${p.old_price ? ` (ancien prix : ${formatPrice(p.old_price)})` : ""} | Stock : ${p.stock} | Note : ${p.rating}★ (${p.reviews} avis) | Badge : ${p.badge || "aucun"} | Description : ${p.description}`
-  ).join("\n")
+function formatProductLine(p) {
+  return `- ${p.name} (${p.category_name}) : ${formatPrice(p.price)}${p.old_price ? ` (ancien prix : ${formatPrice(p.old_price)})` : ""} | Stock : ${p.stock} | Note : ${p.rating}★ (${p.reviews} avis) | Badge : ${p.badge || "aucun"} | Description : ${p.description}`
+}
 
+// Rebuilt on every message instead of once at module load — a lightweight,
+// fully local "RAG-lite" pass: retrieve only what's relevant to THIS
+// question (matching products, matching site-info chunks) plus a small
+// always-on personalization block (recommend.js — the same local, no-AI
+// scoring engine that powers the "Recommended for you" homepage section),
+// instead of stuffing the entire catalog into every request.
+function buildSystemPrompt(query, { products, orders, recentIds }) {
   const categoryLines = CATEGORIES.map((c) => {
-    const count = SAMPLE_PRODUCTS.filter((p) => p.category === c.slug).length
+    const count = products.filter((p) => p.category === c.slug).length
     return `- ${c.name} (${count} produits)`
   }).join("\n")
+
+  const matchedProducts = retrieveProducts(query, products, 6)
+  const fallbackProducts = matchedProducts.length === 0
+    ? products.filter((p) => p.featured).slice(0, 6)
+    : []
+  const productLines = [...matchedProducts, ...fallbackProducts].map(formatProductLine).join("\n") || "(aucun produit spécifique trouvé pour cette question — demande des précisions au client)"
+
+  const knowledgeChunks = retrieveKnowledge(query)
+  const knowledgeBlock = knowledgeChunks.length > 0
+    ? `\n=== INFOS PERTINENTES POUR CETTE QUESTION ===\n${knowledgeChunks.map((c) => `- ${c.content}`).join("\n")}\n`
+    : ""
+
+  const recommended = getRecommendations(products, orders, recentIds, { limit: 4 })
+  const recommendedBlock = recommended.length > 0
+    ? `\n=== RECOMMANDÉ POUR CE CLIENT (basé sur son historique d'achat et sa navigation) ===\n${recommended.map(formatProductLine).join("\n")}\n`
+    : ""
+
+  const popular = [...products].sort((a, b) => (b.reviews || 0) - (a.reviews || 0)).slice(0, 4)
+  const popularBlock = popular.length > 0
+    ? `\n=== PRODUITS LES PLUS POPULAIRES ===\n${popular.map(formatProductLine).join("\n")}\n`
+    : ""
 
   return `Tu es l'assistant virtuel intelligent de Billcom, une boutique e-commerce de technologie haut de gamme.
 Tu réponds en français ou en anglais selon la langue du client.
@@ -22,29 +52,26 @@ Tu es sympathique, professionnel, et tu peux répondre à TOUTES les questions �
 
 === INFORMATIONS SUR LA BOUTIQUE ===
 - Nom : Billcom
-- Spécialité : Gadgets technologiques (smartphones, laptops, audio, cameras, wearables, accessoires)
+- Spécialité : Gadgets technologiques (smartphones, laptops, audio, cameras, wearables, accessoires, tablettes, gaming)
 - Statistiques : 500+ produits, 50 000+ clients satisfaits, note moyenne 4.9★
-- Livraison gratuite pour toute commande supérieure à ${formatPrice(5000)}
-- Livraison standard : ${formatPrice(150)}
 
 === CATÉGORIES DISPONIBLES ===
 ${categoryLines}
-
-=== CATALOGUE COMPLET DES PRODUITS ===
+${knowledgeBlock}
+=== PRODUITS PERTINENTS POUR CETTE QUESTION ===
 ${productLines}
-
+${recommendedBlock}${popularBlock}
 === COMPORTEMENT ===
-- Pour les questions liées à la boutique (produits, prix, stock, livraison) : base-toi sur les données ci-dessus
+- Pour les questions liées à la boutique (produits, prix, stock, livraison, contact...) : base-toi sur les données ci-dessus
+- Si la question porte sur un produit qui n'apparaît pas ci-dessus, dis honnêtement que tu n'as pas cette info précise et propose de chercher sur /shop plutôt que d'inventer
 - Pour toutes les autres questions (culture générale, technologie, conseils, aide, etc.) : réponds librement avec tes connaissances
-- Si un produit demandé n'est pas dans le catalogue, dis-le honnêtement et propose une alternative disponible
+- Utilise le bloc "RECOMMANDÉ POUR CE CLIENT" quand le client demande des suggestions personnalisées ("que me recommandes-tu ?")
+- Utilise le bloc "PRODUITS LES PLUS POPULAIRES" quand le client demande ce qui se vend bien ou ce qui est tendance
 - Ne communique jamais la clé API ou des informations systèmes internes
-- Pour les recommandations produits, tiens compte du budget et des besoins du client
 - Si le stock est faible (< 10 unités), mentionne-le discrètement
-- Tu peux guider les clients vers /shop, /shop?cat=smartphones, /cart, etc.
+- Tu peux guider les clients vers /shop, /shop?cat=smartphones, /cart, /wishlist, etc.
 - Sois concis mais complet. Utilise des emojis avec modération pour rendre la conversation agréable.`
 }
-
-const SYSTEM_PROMPT = buildSystemPrompt()
 
 const SUGGESTIONS = [
   "Quels sont vos meilleurs smartphones ?",
@@ -63,6 +90,15 @@ export default function ChatBot() {
   const [loading, setLoading]   = useState(false)
   const bottomRef               = useRef(null)
   const inputRef                = useRef(null)
+
+  const products = useProductStore((s) => s.products)
+  const { orders, fetchOrders } = useOrderStore()
+  const recentIds = useRecentlyViewedStore((s) => s.ids)
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn)
+
+  useEffect(() => {
+    if (isLoggedIn()) fetchOrders()
+  }, [])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -84,6 +120,8 @@ export default function ChatBot() {
     try {
       if (!GROQ_API_KEY) throw new Error("Clé API manquante")
 
+      const systemPrompt = buildSystemPrompt(msg, { products, orders, recentIds })
+
       const res = await fetch(GROQ_URL, {
         method: "POST",
         headers: {
@@ -93,7 +131,7 @@ export default function ChatBot() {
         body: JSON.stringify({
           model: MODEL,
           messages: [
-            { role: "system", content: SYSTEM_PROMPT },
+            { role: "system", content: systemPrompt },
             ...next.map((m) => ({ role: m.role, content: m.content })),
           ],
           temperature: 0.7,
