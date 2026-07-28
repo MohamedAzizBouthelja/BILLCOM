@@ -26,6 +26,13 @@ export default function Layout() {
     fetchProducts()
   }, [])
 
+  // React Router doesn't reset scroll on navigation like a classic multi-page
+  // site — without this, a new route just inherits whatever scroll position
+  // the previous page was left at.
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [location.pathname])
+
   return (
     <div className="min-h-screen" style={{ background: 'var(--gz-bg)', color: 'var(--gz-text)', transition: 'background 0.3s ease, color 0.3s ease' }}>
       <a href="#main-content" className="skip-link">Skip to content</a>
