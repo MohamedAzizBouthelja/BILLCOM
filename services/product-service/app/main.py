@@ -57,7 +57,9 @@ try:
     logger.info("Connexion à Redis établie avec succès")
 except Exception as e:
     redis_client = None
-    logger.warning("Connexion à Redis échouée: %s. Le consumer de stock sera désactivé.", e)
+    logger.warning(
+        "Connexion à Redis échouée: %s. Le consumer de stock sera désactivé.", e
+    )
 
 STOCK_STREAM = "stock:decrements"
 STOCK_DLQ_STREAM = "stock:decrements:dlq"
@@ -422,7 +424,9 @@ def start_stock_consumer():
         logger.warning("Redis indisponible: consumer de stock désactivé")
         return
     _ensure_consumer_group()
-    threading.Thread(target=_consume_stock_events, daemon=True, name="stock-consumer").start()
+    threading.Thread(
+        target=_consume_stock_events, daemon=True, name="stock-consumer"
+    ).start()
 
 
 # ── Reviews ────────────────────────────────────────────────────────────────
