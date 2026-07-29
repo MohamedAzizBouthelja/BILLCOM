@@ -395,7 +395,7 @@ def _consume_stock_events():
                 CONSUMER_GROUP,
                 consumer_name,
                 min_idle_time=30000,
-                start="0-0",
+                start_id="0-0",
                 count=10,
             )
             for msg_id, fields in claimed:
