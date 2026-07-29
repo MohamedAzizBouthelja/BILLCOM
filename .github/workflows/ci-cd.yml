@@ -351,3 +351,49 @@ jobs:
         run: |
           docker run --rm -v ${{ github.workspace }}/k8s/base:/k8s \
             ghcr.io/yannh/kubeconform:latest -strict -summary /k8s
+
+  # ── Étape 8bis : Validation de la config monitoring (alertes) ──────────
+  # Même logique que validate-k8s : on ne déploie rien (le monitoring est
+  # installé via `helm upgrade` manuel sur la machine du développeur, pas
+  # géré par ArgoCD), on vérifie juste la syntaxe des règles Prometheus et
+  # de la config Alertmanager. Ça aurait attrapé en quelques secondes les
+  # deux bugs trouvés en déployant en direct : un receiver Alertmanager
+  # référencé par une route mais jamais défini, puis un nom de receiver en
+  # collision ("notification config name is not unique").
+  validate-monitoring:
+    name: Validate Monitoring Config
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install yq
+        run: |
+          sudo wget -q -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Install promtool + amtool
+        run: |
+          PROM_VERSION=2.55.1
+          wget -q "https://github.com/prometheus/prometheus/releases/download/v${PROM_VERSION}/prometheus-${PROM_VERSION}.linux-amd64.tar.gz"
+          tar xzf "prometheus-${PROM_VERSION}.linux-amd64.tar.gz"
+          sudo mv "prometheus-${PROM_VERSION}.linux-amd64/promtool" /usr/local/bin/
+
+          AM_VERSION=0.27.0
+          wget -q "https://github.com/prometheus/alertmanager/releases/download/v${AM_VERSION}/alertmanager-${AM_VERSION}.linux-amd64.tar.gz"
+          tar xzf "alertmanager-${AM_VERSION}.linux-amd64.tar.gz"
+          sudo mv "alertmanager-${AM_VERSION}.linux-amd64/amtool" /usr/local/bin/
+
+      - name: Validate PrometheusRule syntax (promtool)
+        run: |
+          yq '.spec' k8s/monitoring/alert-rules.yaml > /tmp/rules.yaml
+          promtool check rules /tmp/rules.yaml
+
+      - name: Validate Alertmanager config syntax (amtool)
+        run: |
+          yq '.alertmanager.config' k8s/monitoring/values-prometheus-stack.yaml > /tmp/alertmanager.yaml
+          # smtp_auth_password est injecté au déploiement via `helm upgrade
+          # --set` (jamais commité) — on met un placeholder ici, amtool ne
+          # valide que la structure de la config, pas les identifiants.
+          yq -i '.global.smtp_auth_password = "ci-placeholder-not-a-real-secret"' /tmp/alertmanager.yaml
+          amtool check-config /tmp/alertmanager.yaml
