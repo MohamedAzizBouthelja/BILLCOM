@@ -70,6 +70,11 @@ spec:
                 configMapKeyRef:
                   name: billcom-config
                   key: JWT_ALGORITHM
+            - name: INTERNAL_SERVICE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: billcom-secrets
+                  key: internal-service-key
             - name: STRIPE_SECRET_KEY
               valueFrom:
                 secretKeyRef:

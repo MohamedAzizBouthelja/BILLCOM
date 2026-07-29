@@ -176,6 +176,13 @@ kubectl port-forward -n argocd svc/argocd-server 8080:443
 ```bash
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 ```
+### Terminal 5 — ALERTMANAGER 
+
+```bash 
+kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-alertmanager 9093:9093
+ 
+```
+
 ---
 
 ## ÉTAPE 10 — Accéder aux interfaces

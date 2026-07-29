@@ -55,6 +55,21 @@ spec:
                 configMapKeyRef:
                   name: billcom-config
                   key: JWT_ALGORITHM
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: billcom-config
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: billcom-config
+                  key: REDIS_PORT
+            - name: INTERNAL_SERVICE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: billcom-secrets
+                  key: internal-service-key
             - name: PORT
               value: "8002"
             - name: PYTHONPATH

@@ -415,6 +415,214 @@ def test_stripe_webhook_invalid_signature(mock_construct):
     assert response.json()["detail"] == "Signature invalide"
 
 
+@patch("requests.get")
+def test_create_order_success_publishes_stock_event(mock_get, monkeypatch):
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "id": 1,
+        "name": "Laptop",
+        "price": 1000.0,
+        "stock": 5,
+    }
+    mock_get.return_value = mock_response
+
+    fake_redis = MagicMock()
+    monkeypatch.setattr("app.main.redis_client", fake_redis)
+
+    token = generate_test_token("testuser", "user")
+    headers = {"Authorization": f"Bearer {token}"}
+    payload = {
+        "order_number": "GZ-TEST-STOCK-1",
+        "product_id": 1,
+        "quantity": 2,
+        "total_price": 2000.0,
+    }
+
+    response = client.post("/api/v1/orders", json=payload, headers=headers)
+    assert response.status_code == 201
+
+    fake_redis.xadd.assert_called_once_with(
+        "stock:decrements",
+        {"order_number": "GZ-TEST-STOCK-1", "product_id": "1", "quantity": "2"},
+    )
+
+
+@patch("requests.get")
+def test_create_order_stock_publish_failure_does_not_break_order(mock_get, monkeypatch):
+    # If Redis itself is unreachable, order creation must still succeed —
+    # publishing the stock event is best-effort, not part of the
+    # payment-integrity path.
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "id": 1,
+        "name": "Laptop",
+        "price": 1000.0,
+        "stock": 5,
+    }
+    mock_get.return_value = mock_response
+
+    fake_redis = MagicMock()
+    fake_redis.xadd.side_effect = Exception("boom")
+    monkeypatch.setattr("app.main.redis_client", fake_redis)
+
+    token = generate_test_token("testuser", "user")
+    headers = {"Authorization": f"Bearer {token}"}
+    payload = {
+        "order_number": "GZ-TEST-STOCK-2",
+        "product_id": 1,
+        "quantity": 1,
+        "total_price": 1000.0,
+    }
+
+    response = client.post("/api/v1/orders", json=payload, headers=headers)
+    assert response.status_code == 201
+
+
+@patch("requests.get")
+def test_create_order_no_redis_does_not_break_order(mock_get, monkeypatch):
+    # If Redis was never available at startup (redis_client is None), order
+    # creation must still succeed.
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "id": 1,
+        "name": "Laptop",
+        "price": 1000.0,
+        "stock": 5,
+    }
+    mock_get.return_value = mock_response
+
+    monkeypatch.setattr("app.main.redis_client", None)
+
+    token = generate_test_token("testuser", "user")
+    headers = {"Authorization": f"Bearer {token}"}
+    payload = {
+        "order_number": "GZ-TEST-STOCK-NOREDIS",
+        "product_id": 1,
+        "quantity": 1,
+        "total_price": 1000.0,
+    }
+
+    response = client.post("/api/v1/orders", json=payload, headers=headers)
+    assert response.status_code == 201
+
+
+@patch("requests.get")
+@patch("app.main.stripe.checkout.Session.retrieve")
+@patch("app.main.stripe.checkout.Session.create")
+def test_verify_stripe_payment_publishes_stock_event_once(
+    mock_create, mock_retrieve, mock_get, monkeypatch
+):
+    monkeypatch.setattr("app.main.STRIPE_SECRET_KEY", "sk_test_123")
+    mock_session = MagicMock()
+    mock_session.id = "cs_test_stock"
+    mock_session.url = "https://checkout.stripe.com/pay/cs_test_stock"
+    mock_create.return_value = mock_session
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "id": 3,
+        "name": "Tablet",
+        "price": 300.0,
+        "stock": 10,
+    }
+    mock_get.return_value = mock_response
+
+    fake_redis = MagicMock()
+    monkeypatch.setattr("app.main.redis_client", fake_redis)
+
+    token = generate_test_token("buyer4", "user")
+    headers = {"Authorization": f"Bearer {token}"}
+    checkout_res = client.post(
+        "/api/v1/orders/stripe/checkout",
+        json={
+            "items": [
+                {"product_id": 3, "name": "Tablet", "price": 300.0, "quantity": 2}
+            ],
+            "shipping_address": "1 rue Test",
+        },
+        headers=headers,
+    )
+    order_number = checkout_res.json()["order_number"]
+
+    mock_retrieve.return_value = MagicMock(
+        payment_status="paid", metadata={"order_number": order_number}
+    )
+
+    # Appelé deux fois (comme le ferait un client qui recharge la page) —
+    # l'événement de décrément ne doit être publié qu'une seule fois (le
+    # guard order.status == "pending" côté order-service protège ça).
+    client.get("/api/v1/orders/stripe/verify/cs_test_stock", headers=headers)
+    response2 = client.get(
+        "/api/v1/orders/stripe/verify/cs_test_stock", headers=headers
+    )
+    assert response2.status_code == 200
+
+    fake_redis.xadd.assert_called_once_with(
+        "stock:decrements",
+        {"order_number": order_number, "product_id": "3", "quantity": "2"},
+    )
+
+
+@patch("requests.get")
+def test_frequently_bought_with(mock_get):
+    def fake_get(url, *args, **kwargs):
+        pid = int(url.rstrip("/").split("/")[-1])
+        resp = MagicMock()
+        resp.status_code = 200
+        resp.json.return_value = {
+            "id": pid,
+            "name": f"Product {pid}",
+            "price": 100.0,
+            "stock": 5,
+        }
+        return resp
+
+    mock_get.side_effect = fake_get
+
+    token = generate_test_token("buyer5", "user")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Deux commandes contenant les produits 10 et 20 ensemble, une commande
+    # avec 10 et 30.
+    client.post(
+        "/api/v1/orders",
+        json={
+            "order_number": "GZ-FBT-1",
+            "items": [{"id": 10, "quantity": 1}, {"id": 20, "quantity": 1}],
+            "total_price": 200.0,
+        },
+        headers=headers,
+    )
+    client.post(
+        "/api/v1/orders",
+        json={
+            "order_number": "GZ-FBT-2",
+            "items": [{"id": 10, "quantity": 1}, {"id": 20, "quantity": 1}],
+            "total_price": 200.0,
+        },
+        headers=headers,
+    )
+    client.post(
+        "/api/v1/orders",
+        json={
+            "order_number": "GZ-FBT-3",
+            "items": [{"id": 10, "quantity": 1}, {"id": 30, "quantity": 1}],
+            "total_price": 200.0,
+        },
+        headers=headers,
+    )
+
+    response = client.get("/api/v1/orders/frequently-bought-with/10")
+    assert response.status_code == 200
+    ids = [p["id"] for p in response.json()]
+    assert ids[0] == 20  # co-occurs twice, more often than 30
+    assert 30 in ids
+
+
 def test_get_order_by_id_uses_redis_cache(monkeypatch):
     fake_redis = MagicMock()
     fake_redis.get.return_value = json.dumps(

@@ -39,6 +39,10 @@ class ProductListResponse(BaseModel):
     total_pages: int
 
 
+class StockAdjust(BaseModel):
+    quantity: int = Field(..., gt=0, description="Quantité à retirer du stock")
+
+
 class ReviewCreate(BaseModel):
     rating: float = Field(..., ge=1.0, le=5.0, description="Note de 1 à 5")
     comment: Optional[str] = Field(None, max_length=1000)

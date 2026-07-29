@@ -22,6 +22,7 @@ from app.config import (
     REDIS_HOST,
     REDIS_PORT,
     PRODUCT_SERVICE_URL,
+    INTERNAL_SERVICE_KEY,
     STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET,
     FRONTEND_URL,
@@ -54,6 +55,8 @@ try:
 except Exception as e:
     redis_client = None
     logger.warning("Connexion à Redis échouée: %s. Le caching sera désactivé.", e)
+
+STOCK_STREAM = "stock:decrements"
 
 app = FastAPI(
     title="Order Service",
@@ -137,6 +140,41 @@ def _fetch_product(product_id: int) -> dict:
     return response.json()
 
 
+def _publish_stock_decrement(order_number: str, items: list) -> None:
+    """Publishes one Redis Streams entry per line item instead of calling
+    product-service synchronously — the event survives product-service being
+    temporarily down and gets applied once a consumer picks it back up. Best
+    effort at the transport level: if Redis itself is unreachable, log and
+    move on rather than fail an already-confirmed order."""
+    if not redis_client:
+        logger.warning(
+            "Redis indisponible: publication stock ignorée pour %s", order_number
+        )
+        return
+    for item in items:
+        item_id = item.get("id") if "id" in item else item.get("product_id")
+        item_qty = item.get("quantity") or 1
+        if not item_id:
+            continue
+        try:
+            redis_client.xadd(
+                STOCK_STREAM,
+                {
+                    "order_number": order_number,
+                    "product_id": str(item_id),
+                    "quantity": str(item_qty),
+                },
+            )
+        except Exception as e:  # nosec B110 - best-effort, ne doit jamais faire
+            # échouer la commande déjà confirmée (paiement/COD déjà actés)
+            logger.warning(
+                "Publication stock échouée: commande=%s produit=%s erreur=%s",
+                order_number,
+                item_id,
+                e,
+            )
+
+
 @app.post(
     "/api/v1/orders", response_model=OrderResponse, status_code=status.HTTP_201_CREATED
 )
@@ -192,6 +230,12 @@ def create_order(
     db.refresh(new_order)
     orders_created.labels(payment_method=order_data.payment_method or "unknown").inc()
     logger.info("Commande créée: %s pour %s", new_order.order_number, username)
+
+    # COD : la commande est confirmée immédiatement, on publie l'événement de
+    # décrément tout de suite (contrairement à Stripe où on attend la
+    # confirmation du paiement avant de toucher au stock).
+    _publish_stock_decrement(new_order.order_number, line_items)
+
     return new_order
 
 
@@ -250,6 +294,53 @@ def get_all_orders(
 ):
     logger.info("Admin %s demande toutes les commandes", payload.get("sub"))
     return db.query(Order).all()
+
+
+@app.get("/api/v1/orders/frequently-bought-with/{product_id}")
+def get_frequently_bought_with(
+    product_id: int,
+    limit: int = 4,
+    db: Session = Depends(get_db),
+):
+    """Public : produits qui apparaissent le plus souvent dans les mêmes
+    commandes que product_id, tous clients confondus. N'expose que des
+    données produit (pas de username/adresse), donc pas besoin d'auth."""
+    limit = max(1, min(limit, 10))
+    counts: dict = {}
+
+    for order_product_id, items_json in db.query(
+        Order.product_id, Order.items_json
+    ).all():
+        ids_in_order = set()
+        if items_json:
+            try:
+                items = json.loads(items_json)
+            except (json.JSONDecodeError, TypeError):
+                items = []
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                item_id = item.get("id") or item.get("product_id")
+                if item_id:
+                    ids_in_order.add(int(item_id))
+        elif order_product_id:
+            ids_in_order.add(order_product_id)
+
+        if product_id not in ids_in_order:
+            continue
+        for other_id in ids_in_order:
+            if other_id != product_id:
+                counts[other_id] = counts.get(other_id, 0) + 1
+
+    top_ids = sorted(counts, key=lambda pid: counts[pid], reverse=True)[:limit]
+
+    results = []
+    for pid in top_ids:
+        try:
+            results.append(_fetch_product(pid))
+        except HTTPException:
+            continue
+    return results
 
 
 # ── Stripe ─────────────────────────────────────────────────────────────────
@@ -378,6 +469,12 @@ def verify_stripe_payment(
             order.status = "processing"
             db.commit()
             logger.info("Paiement confirmé pour commande %s", order_number)
+            # Le paiement vient d'être confirmé pour la première fois (guard
+            # sur status == "pending" ci-dessus) : on publie l'événement de
+            # décrément ici, pas à la création de la session Checkout, pour
+            # ne jamais réduire le stock d'une commande jamais payée.
+            if order.items_json:
+                _publish_stock_decrement(order_number, json.loads(order.items_json))
         return {"paid": True, "order_number": order_number}
 
     return {"paid": False, "order_number": order_number}
@@ -398,10 +495,15 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
         order_number = session_obj.get("metadata", {}).get("order_number")
         if order_number:
             order = db.query(Order).filter(Order.order_number == order_number).first()
-            if order:
+            # Guard sur status == "pending" : ce webhook et /stripe/verify
+            # peuvent tous les deux se déclencher pour la même commande, ce
+            # guard garantit qu'on ne décrémente le stock qu'une seule fois.
+            if order and order.status == "pending":
                 order.status = "processing"
                 db.commit()
                 logger.info("Webhook: commande %s → processing", order_number)
+                if order.items_json:
+                    _publish_stock_decrement(order_number, json.loads(order.items_json))
 
     return {"status": "ok"}
 

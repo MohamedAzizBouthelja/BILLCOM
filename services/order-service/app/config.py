@@ -13,6 +13,9 @@ PRODUCT_SERVICE_URL = os.getenv("PRODUCT_SERVICE_URL", "http://localhost:8002")
 
 JWT_SECRET = os.getenv("JWT_SECRET", "supersecretkeychangeit")
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+INTERNAL_SERVICE_KEY = os.getenv(
+    "INTERNAL_SERVICE_KEY", "devlocal-internal-key-changeit"
+)
 PORT = int(os.getenv("PORT", "8003"))
 HOST = os.getenv(
     "HOST", "0.0.0.0"

@@ -1,6 +1,11 @@
 import logging
+import os
+import socket
+import threading
+import time
 import jwt
-from fastapi import FastAPI, Depends, HTTPException, status, Query
+import redis
+from fastapi import FastAPI, Depends, HTTPException, status, Query, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -10,7 +15,15 @@ from prometheus_client import Counter
 from pythonjsonlogger import jsonlogger
 from typing import Optional
 
-from app.config import PORT, HOST, JWT_SECRET, JWT_ALGORITHM
+from app.config import (
+    PORT,
+    HOST,
+    JWT_SECRET,
+    JWT_ALGORITHM,
+    INTERNAL_SERVICE_KEY,
+    REDIS_HOST,
+    REDIS_PORT,
+)
 from app.database import engine, Base, get_db, SessionLocal
 from app.models import Product, Review
 from app.schemas import (
@@ -19,6 +32,7 @@ from app.schemas import (
     ProductListResponse,
     ReviewCreate,
     ReviewResponse,
+    StockAdjust,
 )
 from app.seed_data import DEFAULT_PRODUCTS
 
@@ -30,6 +44,24 @@ logger.addHandler(log_handler)
 logger.setLevel(logging.INFO)
 
 Base.metadata.create_all(bind=engine)
+
+try:
+    redis_client = redis.Redis(
+        host=REDIS_HOST,
+        port=REDIS_PORT,
+        db=0,
+        decode_responses=True,
+        socket_connect_timeout=2,
+    )
+    redis_client.ping()
+    logger.info("Connexion à Redis établie avec succès")
+except Exception as e:
+    redis_client = None
+    logger.warning("Connexion à Redis échouée: %s. Le consumer de stock sera désactivé.", e)
+
+STOCK_STREAM = "stock:decrements"
+STOCK_DLQ_STREAM = "stock:decrements:dlq"
+CONSUMER_GROUP = "product-service-stock"
 
 app = FastAPI(
     title="Product Service",
@@ -107,6 +139,14 @@ def require_role(required_role: str):
         return payload
 
     return dependency
+
+
+def require_internal_service(x_internal_service_key: str = Header(default="")):
+    """Guards service-to-service endpoints (e.g. stock adjustment called by
+    order-service) — not meant for end users, so it checks a shared secret
+    header instead of a customer JWT."""
+    if x_internal_service_key != INTERNAL_SERVICE_KEY:
+        raise HTTPException(status_code=403, detail="Accès interne uniquement")
 
 
 @app.get("/health")
@@ -222,6 +262,167 @@ def create_product(
     db.refresh(new_product)
     logger.info("Produit créé: %s (ID: %s)", new_product.name, new_product.id)
     return new_product
+
+
+class ProductNotFoundError(Exception):
+    pass
+
+
+class InsufficientStockError(Exception):
+    pass
+
+
+def _apply_stock_decrement(db: Session, product_id: int, quantity: int) -> Product:
+    """Shared by the internal HTTP endpoint below and the Redis Streams
+    consumer, so both paths use identical stock-mutation logic."""
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise ProductNotFoundError(str(product_id))
+    if product.stock < quantity:
+        raise InsufficientStockError(str(product_id))
+
+    product.stock -= quantity
+    db.commit()
+    db.refresh(product)
+    logger.info(
+        "Stock décrémenté: produit=%s quantité=%s nouveau_stock=%s",
+        product_id,
+        quantity,
+        product.stock,
+    )
+    return product
+
+
+@app.patch("/api/v1/products/{product_id}/stock", response_model=ProductResponse)
+def decrement_stock(
+    product_id: int,
+    data: StockAdjust,
+    db: Session = Depends(get_db),
+    _=Depends(require_internal_service),
+):
+    """Direct/manual internal-service path. The normal order flow no longer
+    calls this — order-service publishes to the `stock:decrements` Redis
+    Stream instead, consumed asynchronously below, so a stock decrement
+    survives product-service being temporarily down."""
+    try:
+        return _apply_stock_decrement(db, product_id, data.quantity)
+    except ProductNotFoundError:
+        raise HTTPException(status_code=404, detail="Produit non trouvé")
+    except InsufficientStockError:
+        raise HTTPException(status_code=400, detail="Stock insuffisant")
+
+
+# ── Consumer d'événements de stock (Redis Streams) ───────────────────────────
+
+
+def _process_stock_event(
+    db: Session, order_number: str, product_id: int, quantity: int
+) -> bool:
+    """Returns True if the caller should XACK (applied, already-applied
+    duplicate, or a permanent business failure routed to the DLQ). Returns
+    False if the caller must NOT ack — a transient failure that should be
+    retried later via XAUTOCLAIM."""
+    dedup_key = f"stockevt:{order_number}:{product_id}"
+    if redis_client.set(dedup_key, "1", nx=True, ex=86400) is None:
+        logger.info("Événement stock déjà traité, ignoré: %s", dedup_key)
+        return True
+    try:
+        _apply_stock_decrement(db, product_id, quantity)
+        return True
+    except (ProductNotFoundError, InsufficientStockError) as e:
+        logger.warning(
+            "Échec métier stock -> DLQ: commande=%s produit=%s erreur=%s",
+            order_number,
+            product_id,
+            e,
+        )
+        redis_client.xadd(
+            STOCK_DLQ_STREAM,
+            {
+                "order_number": order_number,
+                "product_id": str(product_id),
+                "quantity": str(quantity),
+                "reason": str(e),
+            },
+        )
+        return True
+    except Exception as e:
+        logger.warning(
+            "Échec transitoire stock, sera retenté: commande=%s produit=%s erreur=%s",
+            order_number,
+            product_id,
+            e,
+        )
+        redis_client.delete(dedup_key)
+        return False
+
+
+def _ensure_consumer_group():
+    try:
+        redis_client.xgroup_create(STOCK_STREAM, CONSUMER_GROUP, id="0", mkstream=True)
+    except redis.exceptions.ResponseError as e:
+        if "BUSYGROUP" not in str(e):
+            raise
+
+
+def _handle_stream_message(msg_id, fields):
+    db = SessionLocal()
+    try:
+        try:
+            applied = _process_stock_event(
+                db,
+                fields["order_number"],
+                int(fields["product_id"]),
+                int(fields["quantity"]),
+            )
+        except (KeyError, ValueError, TypeError) as e:
+            logger.warning("Message stock malformé -> DLQ: id=%s erreur=%s", msg_id, e)
+            redis_client.xadd(STOCK_DLQ_STREAM, {**fields, "reason": f"malformed: {e}"})
+            applied = True
+    finally:
+        db.close()
+    if applied:
+        redis_client.xack(STOCK_STREAM, CONSUMER_GROUP, msg_id)
+
+
+def _consume_stock_events():
+    consumer_name = f"consumer-{socket.gethostname()}-{os.getpid()}"
+    backoff = 1
+    while True:
+        try:
+            _cursor, claimed, _ = redis_client.xautoclaim(
+                STOCK_STREAM,
+                CONSUMER_GROUP,
+                consumer_name,
+                min_idle_time=30000,
+                start="0-0",
+                count=10,
+            )
+            for msg_id, fields in claimed:
+                _handle_stream_message(msg_id, fields)
+
+            resp = redis_client.xreadgroup(
+                CONSUMER_GROUP, consumer_name, {STOCK_STREAM: ">"}, count=10, block=5000
+            )
+            backoff = 1
+            for _stream, messages in resp or []:
+                for msg_id, fields in messages:
+                    _handle_stream_message(msg_id, fields)
+        except Exception as e:
+            logger.warning(
+                "Boucle consumer stock: erreur=%s, retry dans %ss", e, backoff
+            )
+            time.sleep(backoff)
+            backoff = min(backoff * 2, 30)
+
+
+@app.on_event("startup")
+def start_stock_consumer():
+    if not redis_client:
+        logger.warning("Redis indisponible: consumer de stock désactivé")
+        return
+    _ensure_consumer_group()
+    threading.Thread(target=_consume_stock_events, daemon=True, name="stock-consumer").start()
 
 
 # ── Reviews ────────────────────────────────────────────────────────────────

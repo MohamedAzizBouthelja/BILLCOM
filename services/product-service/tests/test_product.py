@@ -4,13 +4,21 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import jwt
 from datetime import datetime, timedelta, timezone
+from unittest.mock import MagicMock
 import os
 import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from app.database import Base, get_db
-from app.main import app
+from app.main import (
+    app,
+    _apply_stock_decrement,
+    _process_stock_event,
+    ProductNotFoundError,
+    InsufficientStockError,
+    STOCK_DLQ_STREAM,
+)
 from app.models import Product, Review
 from app.config import JWT_SECRET, JWT_ALGORITHM
 
@@ -265,6 +273,142 @@ def test_delete_review_forbidden_for_other_user():
     )
     assert response.status_code == 403
     assert response.json()["detail"] == "Non autorisé"
+
+
+def test_decrement_stock_requires_internal_key():
+    product_id = _create_product(name="Speaker", slug="speaker")
+    response = client.patch(
+        f"/api/v1/products/{product_id}/stock", json={"quantity": 1}
+    )
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Accès interne uniquement"
+
+
+def test_decrement_stock_rejects_wrong_key():
+    product_id = _create_product(name="Speaker2", slug="speaker2")
+    response = client.patch(
+        f"/api/v1/products/{product_id}/stock",
+        json={"quantity": 1},
+        headers={"X-Internal-Service-Key": "wrong-key"},
+    )
+    assert response.status_code == 403
+
+
+def test_decrement_stock_success():
+    product_id = _create_product(name="Keyboard", slug="keyboard")
+    response = client.patch(
+        f"/api/v1/products/{product_id}/stock",
+        json={"quantity": 2},
+        headers={"X-Internal-Service-Key": "devlocal-internal-key-changeit"},
+    )
+    assert response.status_code == 200
+    assert response.json()["stock"] == 3  # _create_product seeds stock=5
+
+
+def test_decrement_stock_insufficient_stock():
+    product_id = _create_product(name="Mouse", slug="mouse")
+    response = client.patch(
+        f"/api/v1/products/{product_id}/stock",
+        json={"quantity": 999},
+        headers={"X-Internal-Service-Key": "devlocal-internal-key-changeit"},
+    )
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Stock insuffisant"
+
+
+def test_decrement_stock_product_not_found():
+    response = client.patch(
+        "/api/v1/products/999/stock",
+        json={"quantity": 1},
+        headers={"X-Internal-Service-Key": "devlocal-internal-key-changeit"},
+    )
+    assert response.status_code == 404
+
+
+def test_apply_stock_decrement_success():
+    product_id = _create_product(name="Webcam", slug="webcam")
+    db = TestingSessionLocal()
+    try:
+        product = _apply_stock_decrement(db, product_id, 2)
+        assert product.stock == 3  # _create_product seeds stock=5
+    finally:
+        db.close()
+
+
+def test_apply_stock_decrement_insufficient_raises():
+    product_id = _create_product(name="Headset", slug="headset")
+    db = TestingSessionLocal()
+    try:
+        with pytest.raises(InsufficientStockError):
+            _apply_stock_decrement(db, product_id, 999)
+    finally:
+        db.close()
+
+
+def test_apply_stock_decrement_not_found_raises():
+    db = TestingSessionLocal()
+    try:
+        with pytest.raises(ProductNotFoundError):
+            _apply_stock_decrement(db, 999, 1)
+    finally:
+        db.close()
+
+
+def test_process_stock_event_applies_and_dedupes(monkeypatch):
+    product_id = _create_product(name="Charger", slug="charger")
+    fake_redis = MagicMock()
+    fake_redis.set.side_effect = [True, None]
+    monkeypatch.setattr("app.main.redis_client", fake_redis)
+
+    db = TestingSessionLocal()
+    try:
+        result1 = _process_stock_event(db, "GZ-DEDUP-1", product_id, 2)
+        result2 = _process_stock_event(db, "GZ-DEDUP-1", product_id, 2)
+    finally:
+        db.close()
+
+    assert result1 is True
+    assert result2 is True
+    product = client.get(f"/api/v1/products/{product_id}").json()
+    assert product["stock"] == 3  # décrémenté une seule fois (5 - 2)
+
+
+def test_process_stock_event_business_failure_sends_to_dlq(monkeypatch):
+    product_id = _create_product(name="Cable", slug="cable")
+    fake_redis = MagicMock()
+    fake_redis.set.return_value = True
+    monkeypatch.setattr("app.main.redis_client", fake_redis)
+
+    db = TestingSessionLocal()
+    try:
+        result = _process_stock_event(db, "GZ-DLQ-1", product_id, 999)
+    finally:
+        db.close()
+
+    assert result is True
+    fake_redis.xadd.assert_called_once()
+    call_args = fake_redis.xadd.call_args
+    assert call_args.args[0] == STOCK_DLQ_STREAM
+    assert call_args.args[1]["product_id"] == str(product_id)
+
+
+def test_process_stock_event_transient_failure_releases_dedup(monkeypatch):
+    fake_redis = MagicMock()
+    fake_redis.set.return_value = True
+    monkeypatch.setattr("app.main.redis_client", fake_redis)
+    monkeypatch.setattr(
+        "app.main._apply_stock_decrement",
+        MagicMock(side_effect=Exception("db down")),
+    )
+
+    db = TestingSessionLocal()
+    try:
+        result = _process_stock_event(db, "GZ-TRANSIENT-1", 1, 1)
+    finally:
+        db.close()
+
+    assert result is False
+    fake_redis.delete.assert_called_once_with("stockevt:GZ-TRANSIENT-1:1")
 
 
 def test_delete_review_success_resets_product_rating():

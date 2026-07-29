@@ -74,8 +74,11 @@ services:
     restart: always
     environment:
       - DATABASE_URL=mysql+pymysql://product_svc:productpass_dev@mysql:3306/product_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - JWT_SECRET=supersecretkeychangeit
       - JWT_ALGORITHM=HS256
+      - INTERNAL_SERVICE_KEY=devlocal-internal-key-changeit
       - PORT=8002
       - PYTHONPATH=/app
     depends_on:
@@ -100,6 +103,7 @@ services:
       - PRODUCT_SERVICE_URL=http://product-service:8002
       - JWT_SECRET=supersecretkeychangeit
       - JWT_ALGORITHM=HS256
+      - INTERNAL_SERVICE_KEY=devlocal-internal-key-changeit
       - PORT=8003
       - PYTHONPATH=/app
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
