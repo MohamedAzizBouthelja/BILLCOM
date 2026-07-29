@@ -38,13 +38,24 @@ spec:
             description: "Le 95e percentile de latence dépasse 2 s depuis 3 minutes."
 
         - alert: ServiceDown
-          expr: up{namespace="billcom"} == 0
+          # up{...}==0 ne suffit pas seul : quand un Deployment tombe à 0
+          # réplique, le pod disparaît des Endpoints et la cible disparaît de
+          # la découverte de service Prometheus — elle ne devient jamais
+          # "up=0", elle devient absente, donc cette expression ne matche
+          # jamais rien dans ce cas précis. kube_deployment_status_replicas_available
+          # (kube-state-metrics) reflète l'état réel du Deployment et
+          # capture ce cas, en plus du cas classique où le pod est présent
+          # mais ne répond pas au scrape.
+          expr: |
+            up{namespace="billcom"} == 0
+            or
+            kube_deployment_status_replicas_available{namespace="billcom", deployment=~"user-service|product-service|order-service"} == 0
           for: 1m
           labels:
             severity: critical
           annotations:
-            summary: "Service {{ $labels.job }} inaccessible"
-            description: "Prometheus ne peut plus scraper {{ $labels.job }}."
+            summary: "Service {{ if $labels.job }}{{ $labels.job }}{{ else }}{{ $labels.deployment }}{{ end }} inaccessible"
+            description: "Prometheus ne peut plus scraper le service, ou son Deployment n'a plus aucune réplique disponible."
 
     # ────────────────────────────────────────────────────────────
     # Auth — brute-force / échecs de connexion
