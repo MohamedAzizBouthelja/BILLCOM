@@ -57,11 +57,14 @@ alertmanager:
   config:
     global:
       resolve_timeout: 5m
-      # Set your SMTP or Slack credentials here
-      # smtp_smarthost: 'smtp.gmail.com:587'
-      # smtp_from: 'alerts@billcom.local'
-      # smtp_auth_username: 'you@gmail.com'
-      # smtp_auth_password: 'app-password'
+      # Le mot de passe (app password Gmail) n'est volontairement PAS ici —
+      # il est passé au déploiement via `helm upgrade --set
+      # alertmanager.config.global.smtp_auth_password=...` pour ne jamais
+      # finir en clair dans Git (même pattern que billcom-secrets-external
+      # pour Stripe : secret injecté hors dépôt).
+      smtp_smarthost: 'smtp.gmail.com:587'
+      smtp_from: 'med.aziz.bouthelja@gmail.com'
+      smtp_auth_username: 'med.aziz.bouthelja@gmail.com'
 
     route:
       group_by: ['alertname', 'namespace']
@@ -75,18 +78,24 @@ alertmanager:
           receiver: 'critical-alerts'
         - match:
             severity: warning
-          receiver: 'warning-alerts'
+          receiver: 'billcom-warning-alerts'
 
     receivers:
       - name: 'default'
-        # Null sink — replace with real receiver
+        # Null sink — pas d'email pour le reste (évite le bruit)
       - name: 'critical-alerts'
-        # email_configs:
-        #   - to: 'ops-team@billcom.local'
-        #     send_resolved: true
-        # slack_configs:
-        #   - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
-        #     channel: '#alerts-critical'
+        email_configs:
+          - to: 'med.aziz.bouthelja@gmail.com'
+            send_resolved: true
+      # Nommé "billcom-warning-alerts" (préfixé) plutôt que "warning-alerts" :
+      # l'Operator fusionne cette config avec toute ressource AlertmanagerConfig
+      # présente dans le cluster (alertmanagerConfigSelector par défaut = tout
+      # sélectionner), et un receiver "warning-alerts" y existait déjà, causant
+      # une collision de nom ("notification config name is not unique").
+      - name: 'billcom-warning-alerts'
+        # Null sink pour l'instant — les alertes "warning" (latence, CPU...)
+        # restent visibles dans Grafana/Alertmanager sans spammer la boîte
+        # mail. Ajouter un email_configs ici si tu veux aussi les recevoir.
         #     send_resolved: true
       - name: 'warning-alerts'
         # slack_configs:
