@@ -116,10 +116,14 @@ def get_current_user_payload(
     return payload
 
 
+ADMIN_ROLES = {"admin", "super_admin"}
+
+
 def require_role(required_role: str):
     def dependency(payload: dict = Depends(get_current_user_payload)) -> dict:
         user_role = payload.get("role")
-        if user_role != required_role:
+        allowed = ADMIN_ROLES if required_role == "admin" else {required_role}
+        if user_role not in allowed:
             logger.warning(
                 f"Accès refusé: Rôle {required_role} requis, Rôle {user_role} fourni"
             )

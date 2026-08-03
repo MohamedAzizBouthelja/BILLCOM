@@ -184,6 +184,58 @@ export const useProductStore = create((set, get) => ({
     }
   },
 
+  createProduct: async (productData) => {
+    const { token } = useAuthStore.getState()
+    try {
+      const res = await fetch(PRODUCT_SERVICE + "/api/v1/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify(productData),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) return { ok: false, error: data.detail || "Failed to create product" }
+      set({ products: [data, ...get().products] })
+      return { ok: true, product: data }
+    } catch {
+      return { ok: false, error: "Cannot reach server" }
+    }
+  },
+
+  updateProduct: async (id, productData) => {
+    const { token } = useAuthStore.getState()
+    try {
+      const res = await fetch(PRODUCT_SERVICE + "/api/v1/products/" + id, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify(productData),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) return { ok: false, error: data.detail || "Failed to update product" }
+      set({ products: get().products.map((p) => (p.id === id ? data : p)) })
+      return { ok: true, product: data }
+    } catch {
+      return { ok: false, error: "Cannot reach server" }
+    }
+  },
+
+  deleteProduct: async (id) => {
+    const { token } = useAuthStore.getState()
+    try {
+      const res = await fetch(PRODUCT_SERVICE + "/api/v1/products/" + id, {
+        method: "DELETE",
+        headers: { Authorization: "Bearer " + token },
+      })
+      if (!res.ok && res.status !== 204) {
+        const data = await res.json().catch(() => ({}))
+        return { ok: false, error: data.detail || "Failed to delete product" }
+      }
+      set({ products: get().products.filter((p) => p.id !== id) })
+      return { ok: true }
+    } catch {
+      return { ok: false, error: "Cannot reach server" }
+    }
+  },
+
   getBySlug: (slug) => get().products.find((p) => p.slug === slug),
   getFeatured: () => get().products.filter((p) => p.featured).slice(0, 6),
   getNewArrivals: () => get().products.slice(-4).reverse(),

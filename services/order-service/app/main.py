@@ -100,9 +100,14 @@ def get_current_user_payload(
     return decode_access_token(credentials.credentials)
 
 
+ADMIN_ROLES = {"admin", "super_admin"}
+
+
 def require_role(required_role: str):
     def dependency(payload: dict = Depends(get_current_user_payload)) -> dict:
-        if payload.get("role") != required_role:
+        role = payload.get("role")
+        allowed = ADMIN_ROLES if required_role == "admin" else {required_role}
+        if role not in allowed:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Permissions insuffisantes",

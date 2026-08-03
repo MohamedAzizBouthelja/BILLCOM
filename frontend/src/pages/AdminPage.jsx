@@ -1,16 +1,43 @@
-﻿import { useState } from "react"
+﻿import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
-import { Package, Users, ShoppingBag, TrendingUp, Settings, ArrowLeft } from "lucide-react"
-import { useAuthStore, useOrderStore, SAMPLE_PRODUCTS, formatPrice } from "../lib/store.js"
+import { Package, Users, ShoppingBag, TrendingUp, ArrowLeft, Plus, Pencil, Trash2 } from "lucide-react"
+import { useAuthStore, useOrderStore, useProductStore, formatPrice } from "../lib/store.js"
+import ProductFormModal from "../components/ProductFormModal.jsx"
 
 export default function AdminPage() {
   const { user } = useAuthStore()
   const { orders } = useOrderStore()
+  const { products, loading: productsLoading, fetchProducts, deleteProduct } = useProductStore()
   const [tab, setTab] = useState("dashboard")
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editingProduct, setEditingProduct] = useState(null)
+  const [search, setSearch] = useState("")
+  const [banner, setBanner] = useState(null)
+
+  useEffect(() => { fetchProducts() }, [])
+
+  useEffect(() => {
+    if (!banner) return
+    const t = setTimeout(() => setBanner(null), 3000)
+    return () => clearTimeout(t)
+  }, [banner])
 
   const totalRevenue  = orders.reduce((s, o) => s + (Number(o.total_amount) || 0), 0)
   const totalOrders   = orders.length
-  const totalProducts = SAMPLE_PRODUCTS.length
+  const totalProducts = products.length
+
+  const filteredProducts = products.filter((p) =>
+    p.name.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const openCreateModal = () => { setEditingProduct(null); setModalOpen(true) }
+  const openEditModal = (p) => { setEditingProduct(p); setModalOpen(true) }
+
+  const handleDelete = async (p) => {
+    if (!window.confirm(`Delete "${p.name}"? This cannot be undone.`)) return
+    const result = await deleteProduct(p.id)
+    setBanner(result.ok ? { type: "success", text: `"${p.name}" deleted.` } : { type: "error", text: result.error })
+  }
 
   const TABS = [
     { id: "dashboard", label: "Dashboard",    icon: TrendingUp },
@@ -103,28 +130,89 @@ export default function AdminPage() {
 
             {tab === "products" && (
               <div>
-                <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "1.4rem", color: "var(--gz-text)", marginBottom: "20px" }}>Products ({SAMPLE_PRODUCTS.length})</h2>
-                <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "14px", overflow: "hidden" }}>
-                  <div style={{ overflowX: "auto" }}>
-                    <table className="gz-table">
-                      <thead><tr><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Badge</th></tr></thead>
-                      <tbody>
-                        {SAMPLE_PRODUCTS.map((p) => (
-                          <tr key={p.id}>
-                            <td><img src={p.image_url} alt={p.name} style={{ width: "48px", height: "48px", objectFit: "cover", borderRadius: "8px" }} /></td>
-                            <td style={{ fontWeight: "600", color: "var(--gz-text)", fontSize: "0.85rem", maxWidth: "200px" }}>{p.name}</td>
-                            <td style={{ color: "var(--gz-text2)", fontSize: "0.82rem", textTransform: "capitalize" }}>{p.category_name}</td>
-                            <td style={{ color: "#f59e0b", fontWeight: "700" }}>{formatPrice(p.price)}</td>
-                            <td style={{ color: p.stock < 20 ? "#f87171" : "#4ade80", fontWeight: "600" }}>{p.stock}</td>
-                            <td>
-                              {p.badge && <span style={{ padding: "2px 8px", borderRadius: "6px", fontSize: "0.7rem", fontWeight: "700", background: p.badge === "HOT" ? "rgba(239,68,68,0.15)" : p.badge === "NEW" ? "rgba(34,197,94,0.15)" : "rgba(245,158,11,0.15)", color: p.badge === "HOT" ? "#f87171" : p.badge === "NEW" ? "#4ade80" : "#f59e0b" }}>{p.badge}</span>}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                {banner && (
+                  <div style={{
+                    background: banner.type === "success" ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
+                    border: banner.type === "success" ? "1px solid rgba(34,197,94,0.3)" : "1px solid rgba(239,68,68,0.3)",
+                    color: banner.type === "success" ? "#4ade80" : "#f87171",
+                    borderRadius: "10px", padding: "10px 14px", fontSize: "0.82rem", marginBottom: "16px",
+                  }}>
+                    {banner.text}
+                  </div>
+                )}
+
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", marginBottom: "20px", flexWrap: "wrap" }}>
+                  <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "1.4rem", color: "var(--gz-text)" }}>Products ({totalProducts})</h2>
+                  <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                    <input
+                      className="gz-input"
+                      placeholder="Search products..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      style={{ maxWidth: "240px" }}
+                    />
+                    <button className="btn-primary" onClick={openCreateModal} style={{ whiteSpace: "nowrap" }}>
+                      <Plus size={15} /> Add Product
+                    </button>
                   </div>
                 </div>
+
+                <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "14px", overflow: "hidden" }}>
+                  {productsLoading && products.length === 0 ? (
+                    <div style={{ padding: "16px" }}>
+                      {[0, 1, 2, 3, 4].map((i) => (
+                        <div key={i} className="skeleton" style={{ height: "56px", marginBottom: "8px", borderRadius: "10px" }} />
+                      ))}
+                    </div>
+                  ) : products.length === 0 ? (
+                    <div style={{ padding: "48px", textAlign: "center", color: "var(--gz-text2)" }}>
+                      <p style={{ marginBottom: "16px" }}>No products yet. Add your first product to get started.</p>
+                      <button className="btn-primary" onClick={openCreateModal}><Plus size={15} /> Add Product</button>
+                    </div>
+                  ) : (
+                    <div style={{ overflowX: "auto" }}>
+                      <table className="gz-table">
+                        <thead><tr><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Badge</th><th>Actions</th></tr></thead>
+                        <tbody>
+                          {filteredProducts.map((p) => (
+                            <tr key={p.id}>
+                              <td><img src={p.image_url} alt={p.name} style={{ width: "48px", height: "48px", objectFit: "cover", borderRadius: "8px" }} /></td>
+                              <td style={{ fontWeight: "600", color: "var(--gz-text)", fontSize: "0.85rem", maxWidth: "200px" }}>{p.name}</td>
+                              <td style={{ color: "var(--gz-text2)", fontSize: "0.82rem", textTransform: "capitalize" }}>{p.category_name}</td>
+                              <td style={{ color: "#f59e0b", fontWeight: "700" }}>{formatPrice(p.price)}</td>
+                              <td style={{ color: p.stock < 20 ? "#f87171" : "#4ade80", fontWeight: "600" }}>{p.stock}</td>
+                              <td>
+                                {p.badge && <span style={{ padding: "2px 8px", borderRadius: "6px", fontSize: "0.7rem", fontWeight: "700", background: p.badge === "HOT" ? "rgba(239,68,68,0.15)" : p.badge === "NEW" ? "rgba(34,197,94,0.15)" : "rgba(245,158,11,0.15)", color: p.badge === "HOT" ? "#f87171" : p.badge === "NEW" ? "#4ade80" : "#f59e0b" }}>{p.badge}</span>}
+                              </td>
+                              <td>
+                                <div style={{ display: "flex", gap: "6px" }}>
+                                  <button className="gz-icon-btn" onClick={() => openEditModal(p)} title="Edit" style={{ background: "none", border: "none", cursor: "pointer", borderRadius: "8px", width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                    <Pencil size={16} />
+                                  </button>
+                                  <button className="gz-icon-btn danger" onClick={() => handleDelete(p)} title="Delete" style={{ background: "none", border: "none", cursor: "pointer", borderRadius: "8px", width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                    <Trash2 size={16} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                {modalOpen && (
+                  <ProductFormModal
+                    mode={editingProduct ? "edit" : "create"}
+                    product={editingProduct}
+                    onClose={() => setModalOpen(false)}
+                    onSaved={() => {
+                      setModalOpen(false)
+                      setBanner({ type: "success", text: editingProduct ? "Product updated." : "Product created." })
+                    }}
+                  />
+                )}
               </div>
             )}
 

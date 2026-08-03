@@ -28,6 +28,7 @@ from app.database import engine, Base, get_db, SessionLocal
 from app.models import Product, Review
 from app.schemas import (
     ProductCreate,
+    ProductUpdate,
     ProductResponse,
     ProductListResponse,
     ReviewCreate,
@@ -131,9 +132,14 @@ def get_current_user_payload(
     return decode_access_token(credentials.credentials)
 
 
+ADMIN_ROLES = {"admin", "super_admin"}
+
+
 def require_role(required_role: str):
     def dependency(payload: dict = Depends(get_current_user_payload)) -> dict:
-        if payload.get("role") != required_role:
+        role = payload.get("role")
+        allowed = ADMIN_ROLES if required_role == "admin" else {required_role}
+        if role not in allowed:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Permissions insuffisantes",
@@ -264,6 +270,48 @@ def create_product(
     db.refresh(new_product)
     logger.info("Produit créé: %s (ID: %s)", new_product.name, new_product.id)
     return new_product
+
+
+@app.patch("/api/v1/products/{product_id}", response_model=ProductResponse)
+def update_product(
+    product_id: int,
+    product_data: ProductUpdate,
+    db: Session = Depends(get_db),
+    payload: dict = Depends(require_role("admin")),
+):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Produit non trouvé")
+
+    update_data = product_data.model_dump(exclude_unset=True)
+
+    if "name" in update_data and update_data["name"] != product.name:
+        if db.query(Product).filter(Product.name == update_data["name"]).first():
+            raise HTTPException(
+                status_code=400, detail="Un produit avec ce nom existe déjà"
+            )
+
+    for field, value in update_data.items():
+        setattr(product, field, value)
+
+    db.commit()
+    db.refresh(product)
+    logger.info("Produit mis à jour: %s (ID: %s)", product.name, product.id)
+    return product
+
+
+@app.delete("/api/v1/products/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_product(
+    product_id: int,
+    db: Session = Depends(get_db),
+    payload: dict = Depends(require_role("admin")),
+):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Produit non trouvé")
+    db.delete(product)
+    db.commit()
+    logger.info("Produit supprimé: %s (ID: %s)", product.name, product_id)
 
 
 class ProductNotFoundError(Exception):

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react"
-import { Send, X, Minus, Bot } from "lucide-react"
+import { Send, X, Minus, Bot, Maximize2, Minimize2 } from "lucide-react"
 import { useProductStore, useOrderStore, useAuthStore, CATEGORIES, formatPrice } from "../lib/store.js"
 import { useRecentlyViewedStore } from "../lib/recentlyViewedStore.js"
 import { getRecommendations } from "../lib/recommend.js"
@@ -73,6 +73,50 @@ ${recommendedBlock}${popularBlock}
 - Sois concis mais complet. Utilise des emojis avec modération pour rendre la conversation agréable.`
 }
 
+// The model replies in loose markdown (**bold**, "- item"/"* item" lists) —
+// this renders just enough of that to avoid literal asterisks in the chat
+// bubble, without pulling in a full markdown dependency for such a narrow need.
+function renderInline(text, keyPrefix) {
+  return text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean).map((part, i) =>
+    part.startsWith("**") && part.endsWith("**")
+      ? <strong key={`${keyPrefix}-${i}`}>{part.slice(2, -2)}</strong>
+      : <span key={`${keyPrefix}-${i}`}>{part}</span>
+  )
+}
+
+function renderMarkdownLite(text) {
+  const BULLET = /^\s*[-*]\s+(.*)/
+  const NUMBERED = /^\s*\d+\.\s+(.*)/
+  const lines = text.split("\n")
+  const blocks = []
+  let i = 0
+  while (i < lines.length) {
+    if (BULLET.test(lines[i])) {
+      const items = []
+      while (i < lines.length && BULLET.test(lines[i])) { items.push(BULLET.exec(lines[i])[1]); i++ }
+      blocks.push(
+        <ul key={`ul-${blocks.length}`} style={{ margin: "4px 0", paddingLeft: "18px" }}>
+          {items.map((it, idx) => <li key={idx} style={{ marginBottom: "2px" }}>{renderInline(it, `li-${blocks.length}-${idx}`)}</li>)}
+        </ul>
+      )
+    } else if (NUMBERED.test(lines[i])) {
+      const items = []
+      while (i < lines.length && NUMBERED.test(lines[i])) { items.push(NUMBERED.exec(lines[i])[1]); i++ }
+      blocks.push(
+        <ol key={`ol-${blocks.length}`} style={{ margin: "4px 0", paddingLeft: "18px" }}>
+          {items.map((it, idx) => <li key={idx} style={{ marginBottom: "2px" }}>{renderInline(it, `oli-${blocks.length}-${idx}`)}</li>)}
+        </ol>
+      )
+    } else if (lines[i].trim() === "") {
+      i++
+    } else {
+      blocks.push(<p key={`p-${blocks.length}`} style={{ margin: "0 0 6px" }}>{renderInline(lines[i], `p-${blocks.length}`)}</p>)
+      i++
+    }
+  }
+  return blocks
+}
+
 const SUGGESTIONS = [
   "Quels sont vos meilleurs smartphones ?",
   "Livraison gratuite ?",
@@ -83,6 +127,7 @@ const SUGGESTIONS = [
 export default function ChatBot() {
   const [open, setOpen]         = useState(false)
   const [minimized, setMin]     = useState(false)
+  const [expanded, setExpanded] = useState(false)
   const [messages, setMessages] = useState([
     { role: "assistant", content: "Bonjour ! Je suis l'assistant Billcom 👋\nComment puis-je vous aider aujourd'hui ?" }
   ])
@@ -211,8 +256,8 @@ export default function ChatBot() {
             position: "fixed",
             bottom: "28px",
             right: "28px",
-            width: "360px",
-            height: minimized ? "56px" : "520px",
+            width: expanded ? "420px" : "360px",
+            height: minimized ? "56px" : expanded ? "680px" : "520px",
             borderRadius: "20px",
             background: "var(--gz-surface)",
             border: "1px solid rgba(245,158,11,0.2)",
@@ -221,7 +266,7 @@ export default function ChatBot() {
             flexDirection: "column",
             zIndex: 1000,
             overflow: "hidden",
-            transition: "height 0.3s ease",
+            transition: "height 0.3s ease, width 0.3s ease",
           }}
         >
           {/* Header */}
@@ -251,6 +296,9 @@ export default function ChatBot() {
             <button onClick={() => setMin(!minimized)} aria-label={minimized ? "Expand chat" : "Minimize chat"} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gz-text2)", padding: "4px" }}>
               <Minus size={16} />
             </button>
+            <button onClick={() => setExpanded(!expanded)} aria-label={expanded ? "Shrink chat window" : "Enlarge chat window"} title={expanded ? "Shrink" : "Enlarge"} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gz-text2)", padding: "4px" }}>
+              {expanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+            </button>
             <button onClick={() => setOpen(false)} aria-label="Close chat" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gz-text2)", padding: "4px" }}>
               <X size={16} />
             </button>
@@ -273,10 +321,10 @@ export default function ChatBot() {
                       fontSize: "0.85rem",
                       lineHeight: "1.5",
                       fontFamily: "Bricolage Grotesque, sans-serif",
-                      whiteSpace: "pre-wrap",
+                      whiteSpace: m.role === "user" ? "pre-wrap" : "normal",
                       wordBreak: "break-word",
                     }}>
-                      {m.content}
+                      {m.role === "assistant" ? renderMarkdownLite(m.content) : m.content}
                     </div>
                   </div>
                 ))}

@@ -132,7 +132,7 @@ def test_register_ignores_client_supplied_admin_role():
     assert response.json()["role"] == "user"
 
 
-def _seed_admin(username="administrator", email="admin@example.com"):
+def _seed_admin(username="administrator", email="admin@example.com", role="admin"):
     # The first admin can't be created through the public register endpoint
     # (that's the vulnerability being tested against) — seed it directly at
     # the DB layer, the way a real deployment would via a one-off script.
@@ -142,7 +142,7 @@ def _seed_admin(username="administrator", email="admin@example.com"):
             username=username,
             email=email,
             hashed_password=get_password_hash("password123"),
-            role="admin",
+            role=role,
         )
     )
     db.commit()
@@ -231,3 +231,16 @@ def test_update_user_role_requires_admin():
     )
     assert response_adm.status_code == 200
     assert response_adm.json()["role"] == "admin"
+
+
+def test_get_all_users_super_admin_success():
+    _seed_admin(
+        username="root_super", email="root_super@example.com", role="super_admin"
+    )
+    token = client.post(
+        "/api/v1/users/login",
+        json={"username": "root_super", "password": "password123"},
+    ).json()["access_token"]
+
+    response = client.get("/api/v1/users", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 200

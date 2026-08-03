@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import Layout from './components/layout/Layout.jsx'
@@ -36,7 +36,30 @@ function RouteFallback() {
   )
 }
 
+// Only `token` survives a page reload (see store.js partialize) — `user` (and
+// its `.role`) resets to null until re-fetched, so a fresh full-page
+// navigation (pasted URL, hard refresh) would otherwise hit RequireAdmin with
+// a stale null user and bounce a legitimate admin to "/". Block first render
+// on refetching the profile whenever a token exists but the profile hasn't
+// loaded yet.
+function useAuthBootstrap() {
+  const token = useAuthStore((s) => s.token)
+  const user = useAuthStore((s) => s.user)
+  const fetchProfile = useAuthStore((s) => s.fetchProfile)
+  const [ready, setReady] = useState(!token || !!user)
+
+  useEffect(() => {
+    if (token && !user) fetchProfile().finally(() => setReady(true))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  return ready
+}
+
 export default function App() {
+  const authReady = useAuthBootstrap()
+  if (!authReady) return <RouteFallback />
+
   return (
     <Suspense fallback={<RouteFallback />}>
       <Routes>

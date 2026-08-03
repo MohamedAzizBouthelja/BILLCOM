@@ -1,8 +1,11 @@
-﻿import { useState, useEffect } from "react"
+﻿import { useState, useEffect, useMemo } from "react"
 import { useNavigate, useSearchParams, Link } from "react-router-dom"
-import { LayoutDashboard, ShoppingBag, User, Lock, LogOut, Heart } from "lucide-react"
+import { motion } from "framer-motion"
+import { LayoutDashboard, ShoppingBag, User, Lock, LogOut, Heart, PackageCheck, Wallet, ArrowRight, Sparkles } from "lucide-react"
 import { useAuthStore, useOrderStore, useProductStore, formatPrice } from "../lib/store.js"
 import { useWishlistStore } from "../lib/wishlistStore.js"
+import { useRecentlyViewedStore } from "../lib/recentlyViewedStore.js"
+import { getRecommendations } from "../lib/recommend.js"
 import ProductCard from "../components/ecommerce/ProductCard.jsx"
 
 const STATUS_CLASSES = {
@@ -11,6 +14,45 @@ const STATUS_CLASSES = {
   shipped:    "status-shipped",
   delivered:  "status-delivered",
   cancelled:  "status-cancelled",
+}
+
+const ORDER_STEPS = ["pending", "processing", "shipped", "delivered"]
+
+function OrderStepper({ status }) {
+  if (status === "cancelled") {
+    return (
+      <span style={{ padding: "3px 10px", borderRadius: "999px", fontSize: "0.75rem", fontWeight: "700" }} className="status-cancelled">
+        cancelled
+      </span>
+    )
+  }
+  const currentIndex = ORDER_STEPS.indexOf(status)
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", marginBottom: "5px" }}>
+        {ORDER_STEPS.map((step, i) => (
+          <div key={step} style={{ display: "flex", alignItems: "center" }}>
+            <div
+              title={step}
+              style={{
+                width: "8px", height: "8px", borderRadius: "50%", flexShrink: 0,
+                background: i <= currentIndex ? "#f59e0b" : "var(--gz-border2)",
+                transition: "background 0.3s ease",
+              }}
+            />
+            {i < ORDER_STEPS.length - 1 && (
+              <div style={{
+                width: "16px", height: "2px", flexShrink: 0,
+                background: i < currentIndex ? "#f59e0b" : "var(--gz-border2)",
+                transition: "background 0.3s ease",
+              }} />
+            )}
+          </div>
+        ))}
+      </div>
+      <span style={{ fontSize: "0.72rem", color: "var(--gz-text2)", fontWeight: "600", textTransform: "capitalize" }}>{status}</span>
+    </div>
+  )
 }
 
 function initials(name) {
@@ -41,6 +83,11 @@ export default function MyAccountPage() {
   const { products } = useProductStore()
   const wishlistIds = useWishlistStore((s) => s.ids)
   const wishlistProducts = products.filter((p) => wishlistIds.includes(p.id))
+  const recentlyViewedIds = useRecentlyViewedStore((s) => s.ids)
+  const recommendations = useMemo(
+    () => getRecommendations(products, orders, recentlyViewedIds, { limit: 4 }),
+    [products, orders, recentlyViewedIds]
+  )
 
   const [profile, setProfile] = useState({ first_name: "", last_name: "", phone: "", address: "", city: "" })
   const [pwForm, setPwForm]   = useState({ current: "", next: "", confirm: "" })
@@ -70,6 +117,20 @@ export default function MyAccountPage() {
   ]
 
   const inputStyle = { width: "100%", padding: "11px 14px", background: "var(--gz-bg)", border: "1.5px solid var(--gz-border)", borderRadius: "10px", color: "var(--gz-text)", fontSize: "0.9rem", outline: "none", fontFamily: "DM Sans, sans-serif" }
+
+  const handleSpotlightMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    e.currentTarget.style.setProperty("--gz-mx", (e.clientX - rect.left) + "px")
+    e.currentTarget.style.setProperty("--gz-my", (e.clientY - rect.top) + "px")
+  }
+
+  const memberSince = user && user.created_at ? new Date(user.created_at).toLocaleDateString(undefined, { month: "long", year: "numeric" }) : null
+
+  const DASHBOARD_STATS = [
+    { label: "Total Orders", value: totalOrders,              icon: ShoppingBag,  color: "#60a5fa" },
+    { label: "Delivered",    value: delivered,                icon: PackageCheck, color: "#4ade80" },
+    { label: "Total Spent",  value: formatPrice(totalSpent),  icon: Wallet,       color: "#f59e0b" },
+  ]
 
   return (
     <div style={{ paddingTop: "80px", minHeight: "100vh" }}>
@@ -114,24 +175,64 @@ export default function MyAccountPage() {
             {/* Dashboard */}
             {tab === "dashboard" && (
               <div>
-                <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "1.5rem", color: "var(--gz-text)", marginBottom: "24px" }}>
-                  Welcome back, {user && user.username ? user.username.split(" ")[0] : "there"}! 👋
-                </h2>
+                {/* Welcome banner */}
+                <div style={{
+                  position: "relative", overflow: "hidden",
+                  background: "linear-gradient(135deg, color-mix(in srgb, var(--gz-surface) 100%, #f59e0b 6%) 0%, var(--gz-surface) 60%)",
+                  border: "1px solid var(--gz-border2)", borderRadius: "16px",
+                  padding: "26px 28px", marginBottom: "24px",
+                  display: "flex", alignItems: "center", gap: "18px", flexWrap: "wrap",
+                }}>
+                  <div style={{
+                    position: "absolute", top: "-40%", right: "-8%", width: "260px", height: "260px",
+                    background: "radial-gradient(circle, rgba(245,158,11,0.18), transparent 70%)",
+                    pointerEvents: "none",
+                  }} />
+                  <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "#f59e0b", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "1.15rem", color: "#0a0a0f", flexShrink: 0 }}>
+                    {initials(user && user.username)}
+                  </div>
+                  <div style={{ position: "relative" }}>
+                    <h2 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "800", fontSize: "1.5rem", color: "var(--gz-text)", marginBottom: "4px" }}>
+                      Welcome back, {user && user.username ? user.username.split(" ")[0] : "there"}! 👋
+                    </h2>
+                    <p style={{ fontSize: "0.85rem", color: "var(--gz-text2)" }}>
+                      {memberSince ? `Member since ${memberSince}` : "Here's what's happening with your account."}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Stats */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px", marginBottom: "28px" }}>
-                  {[
-                    { label: "Total Orders", value: totalOrders },
-                    { label: "Delivered",    value: delivered },
-                    { label: "Total Spent",  value: formatPrice(totalSpent) },
-                  ].map((s) => (
-                    <div key={s.label} style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "12px", padding: "20px" }}>
-                      <div style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "1.6rem", fontWeight: "800", color: "#f59e0b", marginBottom: "4px" }}>{s.value}</div>
+                  {DASHBOARD_STATS.map((s, i) => (
+                    <motion.div
+                      key={s.label}
+                      className="gz-card"
+                      onMouseMove={handleSpotlightMove}
+                      initial={{ opacity: 0, y: 14 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.35, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                      style={{ position: "relative", overflow: "hidden", padding: "20px" }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
+                        <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: s.color + "20", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <s.icon size={18} color={s.color} />
+                        </div>
+                      </div>
+                      <div style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontSize: "1.6rem", fontWeight: "800", color: "var(--gz-text)", marginBottom: "4px" }}>{s.value}</div>
                       <div style={{ fontSize: "0.8rem", color: "var(--gz-text2)", fontWeight: "500" }}>{s.label}</div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
+
+                {/* Recent Orders */}
                 <div style={{ background: "var(--gz-surface)", border: "1px solid var(--gz-border)", borderRadius: "14px", overflow: "hidden" }}>
-                  <div style={{ padding: "18px 20px", borderBottom: "1px solid var(--gz-border2)" }}>
+                  <div style={{ padding: "18px 20px", borderBottom: "1px solid var(--gz-border2)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <h3 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", fontSize: "1rem", color: "var(--gz-text)" }}>Recent Orders</h3>
+                    {orders.length > 0 && (
+                      <button onClick={() => setTab("orders")} className="gz-text-link" style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "0.8rem", fontWeight: "600", background: "none", border: "none", cursor: "pointer" }}>
+                        View all <ArrowRight size={14} />
+                      </button>
+                    )}
                   </div>
                   {ordersLoading && orders.length === 0 ? (
                     <SkeletonRows count={3} cols={5} />
@@ -148,22 +249,41 @@ export default function MyAccountPage() {
                           <tr><th>Order #</th><th>Date</th><th>Total</th><th>Status</th><th>Payment</th></tr>
                         </thead>
                         <tbody>
-                          {orders.slice(0, 5).map((o) => (
-                            <tr key={o.id}>
-                              <td style={{ color: "#f59e0b", fontWeight: "700", fontSize: "0.85rem" }}>{o.order_number}</td>
-                              <td style={{ color: "var(--gz-text2)", fontSize: "0.85rem" }}>{new Date(o.created_at).toLocaleDateString()}</td>
-                              <td style={{ fontWeight: "700", color: "var(--gz-text)" }}>{formatPrice(o.total_amount)}</td>
-                              <td>
-                                <span style={{ padding: "3px 10px", borderRadius: "999px", fontSize: "0.75rem", fontWeight: "700" }} className={STATUS_CLASSES[o.status] || "status-pending"}>{o.status}</span>
-                              </td>
-                              <td style={{ color: "var(--gz-text2)", fontSize: "0.85rem", textTransform: "capitalize" }}>{o.payment_method}</td>
-                            </tr>
-                          ))}
+                          {orders.slice(0, 5).map((o) => {
+                            const thumb = o.items && o.items[0] && o.items[0].image_url
+                            return (
+                              <tr key={o.id}>
+                                <td style={{ color: "#f59e0b", fontWeight: "700", fontSize: "0.85rem" }}>
+                                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                    {thumb && <img src={thumb} alt="" style={{ width: "32px", height: "32px", objectFit: "cover", borderRadius: "6px", flexShrink: 0 }} />}
+                                    {o.order_number}
+                                  </div>
+                                </td>
+                                <td style={{ color: "var(--gz-text2)", fontSize: "0.85rem" }}>{new Date(o.created_at).toLocaleDateString()}</td>
+                                <td style={{ fontWeight: "700", color: "var(--gz-text)" }}>{formatPrice(o.total_amount)}</td>
+                                <td><OrderStepper status={o.status} /></td>
+                                <td style={{ color: "var(--gz-text2)", fontSize: "0.85rem", textTransform: "capitalize" }}>{o.payment_method}</td>
+                              </tr>
+                            )
+                          })}
                         </tbody>
                       </table>
                     </div>
                   )}
                 </div>
+
+                {/* Recommended for you */}
+                {recommendations.length > 0 && (
+                  <div style={{ marginTop: "28px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "16px" }}>
+                      <Sparkles size={16} color="#f59e0b" />
+                      <h3 style={{ fontFamily: "Bricolage Grotesque, sans-serif", fontWeight: "700", fontSize: "1rem", color: "var(--gz-text)" }}>Recommended for you</h3>
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px,1fr))", gap: "16px" }}>
+                      {recommendations.map((p) => <ProductCard key={p.id} product={p} />)}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

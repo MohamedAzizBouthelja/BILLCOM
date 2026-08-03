@@ -165,6 +165,138 @@ def test_create_product_duplicate_name():
     assert response.json()["detail"] == "Un produit avec ce nom existe déjà"
 
 
+def test_create_product_success_for_super_admin():
+    payload = {"name": "Router", "slug": "router", "price": 60.0, "stock": 20}
+    super_admin_token = generate_test_token("superadmin", "super_admin")
+    headers = {"Authorization": f"Bearer {super_admin_token}"}
+
+    response = client.post("/api/v1/products", json=payload, headers=headers)
+    assert response.status_code == 201
+
+
+def test_update_product_success_for_admin():
+    product_id = _create_product("Keyboard", "keyboard")
+    admin_token = generate_test_token("adminuser", "admin")
+    headers = {"Authorization": f"Bearer {admin_token}"}
+
+    response = client.patch(
+        f"/api/v1/products/{product_id}",
+        json={"price": 999.0, "stock": 50},
+        headers=headers,
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["price"] == 999.0
+    assert data["stock"] == 50
+    assert data["name"] == "Keyboard"
+
+
+def test_update_product_not_found():
+    admin_token = generate_test_token("adminuser", "admin")
+    headers = {"Authorization": f"Bearer {admin_token}"}
+
+    response = client.patch(
+        "/api/v1/products/999", json={"price": 10.0}, headers=headers
+    )
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Produit non trouvé"
+
+
+def test_update_product_forbidden_for_user():
+    product_id = _create_product("Mouse", "mouse")
+    user_token = generate_test_token("testuser", "user")
+    headers = {"Authorization": f"Bearer {user_token}"}
+
+    response = client.patch(
+        f"/api/v1/products/{product_id}", json={"price": 10.0}, headers=headers
+    )
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Permissions insuffisantes"
+
+
+def test_update_product_unauthorized():
+    product_id = _create_product("Webcam", "webcam")
+    response = client.patch(f"/api/v1/products/{product_id}", json={"price": 10.0})
+    assert response.status_code == 403
+
+
+def test_update_product_duplicate_name_rejected():
+    admin_token = generate_test_token("adminuser", "admin")
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    _create_product("Speaker A", "speaker-a")
+    product_b_id = _create_product("Speaker B", "speaker-b")
+
+    response = client.patch(
+        f"/api/v1/products/{product_b_id}",
+        json={"name": "Speaker A"},
+        headers=headers,
+    )
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Un produit avec ce nom existe déjà"
+
+
+def test_update_product_same_name_allowed():
+    product_id = _create_product("Headset", "headset")
+    admin_token = generate_test_token("adminuser", "admin")
+    headers = {"Authorization": f"Bearer {admin_token}"}
+
+    response = client.patch(
+        f"/api/v1/products/{product_id}",
+        json={"name": "Headset", "stock": 3},
+        headers=headers,
+    )
+    assert response.status_code == 200
+    assert response.json()["stock"] == 3
+
+
+def test_update_product_validation_failure():
+    product_id = _create_product("Charger", "charger")
+    admin_token = generate_test_token("adminuser", "admin")
+    headers = {"Authorization": f"Bearer {admin_token}"}
+
+    response = client.patch(
+        f"/api/v1/products/{product_id}", json={"price": -5}, headers=headers
+    )
+    assert response.status_code == 422
+
+
+def test_delete_product_success_for_admin():
+    product_id = _create_product("Printer", "printer")
+    admin_token = generate_test_token("adminuser", "admin")
+    headers = {"Authorization": f"Bearer {admin_token}"}
+
+    response = client.delete(f"/api/v1/products/{product_id}", headers=headers)
+    assert response.status_code == 204
+
+    get_response = client.get(f"/api/v1/products/{product_id}")
+    assert get_response.status_code == 404
+
+
+def test_delete_product_not_found():
+    admin_token = generate_test_token("adminuser", "admin")
+    headers = {"Authorization": f"Bearer {admin_token}"}
+
+    response = client.delete("/api/v1/products/999", headers=headers)
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Produit non trouvé"
+
+
+def test_delete_product_forbidden_for_user():
+    product_id = _create_product("Scanner", "scanner")
+    user_token = generate_test_token("testuser", "user")
+    headers = {"Authorization": f"Bearer {user_token}"}
+
+    response = client.delete(f"/api/v1/products/{product_id}", headers=headers)
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Permissions insuffisantes"
+
+
+def test_delete_product_unauthorized():
+    product_id = _create_product("Projector", "projector")
+    response = client.delete(f"/api/v1/products/{product_id}")
+    assert response.status_code == 403
+
+
 def _create_product(name="Monitor", slug="monitor"):
     admin_token = generate_test_token("adminuser", "admin")
     headers = {"Authorization": f"Bearer {admin_token}"}

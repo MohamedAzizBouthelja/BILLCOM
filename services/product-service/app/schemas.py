@@ -23,6 +23,20 @@ class ProductCreate(ProductBase):
     pass
 
 
+class ProductUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=2, max_length=100)
+    slug: Optional[str] = Field(None, min_length=2, max_length=120)
+    description: Optional[str] = Field(None, max_length=500)
+    price: Optional[float] = Field(None, gt=0.0)
+    old_price: Optional[float] = None
+    stock: Optional[int] = Field(None, ge=0)
+    image_url: Optional[str] = None
+    badge: Optional[str] = None
+    featured: Optional[bool] = None
+    category: Optional[str] = None
+    category_name: Optional[str] = None
+
+
 class ProductResponse(ProductBase):
     id: int
     created_at: datetime

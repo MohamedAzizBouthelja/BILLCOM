@@ -264,6 +264,14 @@ def test_get_all_orders_admin_success(mock_get):
     assert any(o["order_number"] == "GZ-TEST-5" for o in response.json())
 
 
+def test_get_all_orders_super_admin_success():
+    super_admin_token = generate_test_token("root_super", "super_admin")
+    response = client.get(
+        "/api/v1/orders", headers={"Authorization": f"Bearer {super_admin_token}"}
+    )
+    assert response.status_code == 200
+
+
 def test_create_stripe_checkout_not_configured():
     token = generate_test_token("buyer1", "user")
     headers = {"Authorization": f"Bearer {token}"}
